@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>College Planner</title>
+  <title>College Planner with Reminders</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; background: #fdfdfd; }
     nav a { margin: 10px; text-decoration: none; color: #0077cc; font-weight: bold; }
@@ -24,19 +24,19 @@
       color: #fff;
     }
     /* 🎨 Different colors for each type */
-    .Class { background: #007bff; }       /* Blue */
-    .Assignment { background: #28a745; }  /* Green */
-    .Exam { background: #dc3545; }        /* Red */
-    .Job { background: #fd7e14; }         /* Orange */
-    .Event { background: #6f42c1; }       /* Purple */
-    .Festival { background: #ffc107; color: #000; } /* Yellow with black text */
+    .Class { background: #007bff; }
+    .Assignment { background: #28a745; }
+    .Exam { background: #dc3545; }
+    .Job { background: #fd7e14; }
+    .Event { background: #6f42c1; }
+    .Festival { background: #ffc107; color: #000; }
 
     #addForm { margin: 20px 0; }
     input, select, button { margin: 5px; padding: 6px; }
   </style>
 </head>
 <body>
-  <h1>📚 College Monthly Planner</h1>
+  <h1>📚 College Monthly Planner with Reminders</h1>
 
   <!-- Navigation -->
   <nav>
@@ -59,6 +59,8 @@
     <input type="date" id="startDate" required>
     <label>End:</label>
     <input type="date" id="endDate" required>
+    <label>Reminder:</label>
+    <input type="datetime-local" id="reminder" required>
     <button type="submit">Add</button>
   </form>
 
@@ -67,6 +69,12 @@
 
   <script>
     const calendar = document.getElementById("calendar");
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+    // Request notification permission
+    if (Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
 
     // Get current month/year
     let today = new Date();
@@ -91,40 +99,60 @@
         dayBox.innerHTML = `<h3>${d}</h3>`;
         calendar.appendChild(dayBox);
       }
+
+      // Render saved tasks
+      tasks.forEach(task => {
+        let start = new Date(task.start);
+        let end = new Date(task.end);
+        let current = new Date(start);
+        while (current <= end) {
+          let dateAttr = `${current.getFullYear()}-${current.getMonth()+1}-${current.getDate()}`;
+          let dayBox = document.querySelector(`.day[data-date='${dateAttr}']`);
+          if (dayBox) {
+            let div = document.createElement("div");
+            div.className = `event ${task.type}`;
+            div.innerText = `${task.type}: ${task.title}`;
+            dayBox.appendChild(div);
+          }
+          current.setDate(current.getDate() + 1);
+        }
+      });
     }
 
-    // Add event (with start and end date)
+    // Add event (with start, end, and reminder)
     document.getElementById("addForm").addEventListener("submit", function(e) {
       e.preventDefault();
       let title = document.getElementById("title").value;
       let type = document.getElementById("type").value;
-      let start = new Date(document.getElementById("startDate").value);
-      let end = new Date(document.getElementById("endDate").value);
+      let start = document.getElementById("startDate").value;
+      let end = document.getElementById("endDate").value;
+      let reminder = document.getElementById("reminder").value;
 
-      if (end < start) {
+      if (new Date(end) < new Date(start)) {
         alert("End date cannot be before start date!");
         return;
       }
 
-      // Loop through all days from start to end
-      let current = new Date(start);
-      while (current <= end) {
-        let dateAttr = `${current.getFullYear()}-${current.getMonth()+1}-${current.getDate()}`;
-        let dayBox = document.querySelector(`.day[data-date='${dateAttr}']`);
+      let task = { title, type, start, end, reminder, notified: false };
+      tasks.push(task);
+      localStorage.setItem("tasks", JSON.stringify(tasks));
 
-        if (dayBox) {
-          let div = document.createElement("div");
-          div.className = `event ${type}`;
-          div.innerText = `${type}: ${title}`;
-          dayBox.appendChild(div);
-        }
-
-        // Go to next day
-        current.setDate(current.getDate() + 1);
-      }
-
+      buildCalendar();
       this.reset();
     });
+
+    // Check reminders every 30 seconds
+    setInterval(() => {
+      let now = new Date().getTime();
+      tasks.forEach(task => {
+        let reminderTime = new Date(task.reminder).getTime();
+        if (!task.notified && reminderTime <= now) {
+          new Notification("⏰ Reminder", { body: `${task.type}: ${task.title}` });
+          task.notified = true;
+          localStorage.setItem("tasks", JSON.stringify(tasks));
+        }
+      });
+    }, 30000);
 
     buildCalendar();
   </script>
