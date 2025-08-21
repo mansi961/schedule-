@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Schedule - Plane Schedule Planner</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    nav a { margin: 10px; text-decoration: none; color: blue; }
+    nav a:hover { text-decoration: underline; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    th { background: #f2f2f2; }
+  </style>
+</head>
+<body>
+  <h1>✈️ Plane Schedule Planner</h1>
+  
+  <!-- Navigation Menu -->
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="schedule.html">Schedule</a>
+    <a href="about.html">About</a>
+  </nav>
+
+  <h2>Add Your Flights</h2>
+  <form id="scheduleForm">
+    <input type="text" id="flight" placeholder="Flight Number" required>
+    <input type="text" id="from" placeholder="From Airport" required>
+    <input type="text" id="to" placeholder="To Airport" required>
+    <input type="date" id="date" required>
+    <input type="time" id="time" required>
+    <button type="submit">Add Flight</button>
+  </form>
+
+  <table id="scheduleTable">
+    <tr>
+      <th>Flight</th>
+      <th>From</th>
+      <th>To</th>
+      <th>Date</th>
+      <th>Time</th>
+    </tr>
+  </table>
+
+  <script>
+    document.getElementById("scheduleForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      let table = document.getElementById("scheduleTable");
+      let row = table.insertRow();
+      row.insertCell(0).innerText = document.getElementById("flight").value;
+      row.insertCell(1).innerText = document.getElementById("from").value;
+      row.insertCell(2).innerText = document.getElementById("to").value;
+      row.insertCell(3).innerText = document.getElementById("date").value;
+      row.insertCell(4).innerText = document.getElementById("time").value;
+      this.reset();
+    });
+  </script>
+</body>
+</html>
