@@ -1,24 +1,104 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Home - Plane Schedule Planner</title>
+  <title>Monthly Plane Schedule</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
     nav a { margin: 10px; text-decoration: none; color: blue; }
     nav a:hover { text-decoration: underline; }
+    h1 { text-align: center; }
+    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .day {
+      border: 1px solid #ccc;
+      min-height: 100px;
+      padding: 5px;
+      position: relative;
+      background: #f9f9f9;
+    }
+    .day h3 { margin: 0; font-size: 14px; }
+    .event {
+      background: #d9edf7;
+      margin-top: 3px;
+      padding: 2px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+    #addForm { margin: 20px 0; }
   </style>
 </head>
 <body>
-  <h1>✈️ Plane Schedule Planner</h1>
-  
-  <!-- Navigation Menu -->
+  <h1>✈️ Monthly Plane Schedule</h1>
+
+  <!-- Navigation -->
   <nav>
     <a href="index.html">Home</a>
     <a href="schedule.html">Schedule</a>
     <a href="about.html">About</a>
   </nav>
 
-  <h2>Welcome!</h2>
-  <p>This is a free plane schedule planner. Use the tabs above to navigate.</p>
+  <!-- Form to Add Flights -->
+  <form id="addForm">
+    <input type="text" id="flight" placeholder="Flight Number" required>
+    <input type="text" id="from" placeholder="From Airport" required>
+    <input type="text" id="to" placeholder="To Airport" required>
+    <input type="date" id="date" required>
+    <button type="submit">Add Flight</button>
+  </form>
+
+  <!-- Calendar -->
+  <div id="calendar" class="calendar"></div>
+
+  <script>
+    const calendar = document.getElementById("calendar");
+
+    // Get current month and year
+    let today = new Date();
+    let year = today.getFullYear();
+    let month = today.getMonth();
+
+    // Create calendar
+    function buildCalendar() {
+      calendar.innerHTML = "";
+      let firstDay = new Date(year, month, 1).getDay();
+      let daysInMonth = new Date(year, month + 1, 0).getDate();
+
+      // Empty cells before first day
+      for (let i = 0; i < firstDay; i++) {
+        calendar.appendChild(document.createElement("div"));
+      }
+
+      // Create days
+      for (let d = 1; d <= daysInMonth; d++) {
+        let dayBox = document.createElement("div");
+        dayBox.className = "day";
+        dayBox.setAttribute("data-date", `${year}-${month+1}-${d}`);
+        dayBox.innerHTML = `<h3>${d}</h3>`;
+        calendar.appendChild(dayBox);
+      }
+    }
+
+    // Add flight to calendar
+    document.getElementById("addForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      let flight = document.getElementById("flight").value;
+      let from = document.getElementById("from").value;
+      let to = document.getElementById("to").value;
+      let date = new Date(document.getElementById("date").value);
+
+      let dateAttr = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`;
+      let dayBox = document.querySelector(`.day[data-date='${dateAttr}']`);
+
+      if (dayBox) {
+        let div = document.createElement("div");
+        div.className = "event";
+        div.innerText = `${flight}: ${from} → ${to}`;
+        dayBox.appendChild(div);
+      }
+
+      this.reset();
+    });
+
+    buildCalendar();
+  </script>
 </body>
 </html>
