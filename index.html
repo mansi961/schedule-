@@ -43,9 +43,12 @@
       <option value="Class">Class</option>
       <option value="Assignment">Assignment</option>
       <option value="Exam">Exam</option>
-      <option value="JOb">JOb</option>
+      <option value="Job">Job</option>
     </select>
-    <input type="date" id="date" required>
+    <label>Start:</label>
+    <input type="date" id="startDate" required>
+    <label>End:</label>
+    <input type="date" id="endDate" required>
     <button type="submit">Add</button>
   </form>
 
@@ -80,21 +83,34 @@
       }
     }
 
-    // Add event (class/assignment/exam)
+    // Add event (class/assignment/exam/job) with start and end date
     document.getElementById("addForm").addEventListener("submit", function(e) {
       e.preventDefault();
       let title = document.getElementById("title").value;
       let type = document.getElementById("type").value;
-      let date = new Date(document.getElementById("date").value);
+      let start = new Date(document.getElementById("startDate").value);
+      let end = new Date(document.getElementById("endDate").value);
 
-      let dateAttr = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`;
-      let dayBox = document.querySelector(`.day[data-date='${dateAttr}']`);
+      if (end < start) {
+        alert("End date cannot be before start date!");
+        return;
+      }
 
-      if (dayBox) {
-        let div = document.createElement("div");
-        div.className = "event";
-        div.innerText = `${type}: ${title}`;
-        dayBox.appendChild(div);
+      // Loop through all days from start to end
+      let current = new Date(start);
+      while (current <= end) {
+        let dateAttr = `${current.getFullYear()}-${current.getMonth()+1}-${current.getDate()}`;
+        let dayBox = document.querySelector(`.day[data-date='${dateAttr}']`);
+
+        if (dayBox) {
+          let div = document.createElement("div");
+          div.className = "event";
+          div.innerText = `${type}: ${title}`;
+          dayBox.appendChild(div);
+        }
+
+        // Go to next day
+        current.setDate(current.getDate() + 1);
       }
 
       this.reset();
