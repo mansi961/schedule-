@@ -1,48 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Monthly Plane Schedule</title>
+  <title>College Planner</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    nav a { margin: 10px; text-decoration: none; color: blue; }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #fdfdfd; }
+    nav a { margin: 10px; text-decoration: none; color: #0077cc; font-weight: bold; }
     nav a:hover { text-decoration: underline; }
     h1 { text-align: center; }
-    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 20px; }
     .day {
       border: 1px solid #ccc;
-      min-height: 100px;
+      min-height: 120px;
       padding: 5px;
+      background: #fafafa;
       position: relative;
-      background: #f9f9f9;
     }
     .day h3 { margin: 0; font-size: 14px; }
     .event {
-      background: #d9edf7;
+      background: #cce5ff;
       margin-top: 3px;
-      padding: 2px;
+      padding: 3px;
       border-radius: 3px;
       font-size: 12px;
     }
     #addForm { margin: 20px 0; }
+    input, select, button { margin: 5px; padding: 6px; }
   </style>
 </head>
 <body>
-  <h1>✈️ Monthly Plane Schedule</h1>
+  <h1>📚 College Monthly Planner</h1>
 
-  <!-- Navigation -->
+  <!-- Navigation (optional for more pages) -->
   <nav>
-    <a href="index.html">Home</a>
-    <a href="schedule.html">Schedule</a>
+    <a href="college-planner.html">Planner</a>
     <a href="about.html">About</a>
   </nav>
 
-  <!-- Form to Add Flights -->
+  <!-- Form to Add College Events -->
   <form id="addForm">
-    <input type="text" id="flight" placeholder="Flight Number" required>
-    <input type="text" id="from" placeholder="From Airport" required>
-    <input type="text" id="to" placeholder="To Airport" required>
+    <input type="text" id="title" placeholder="Class/Assignment/Task" required>
+    <select id="type">
+      <option value="Class">Class</option>
+      <option value="Assignment">Assignment</option>
+      <option value="Exam">Exam</option>
+      <option value="Other">Other</option>
+    </select>
     <input type="date" id="date" required>
-    <button type="submit">Add Flight</button>
+    <button type="submit">Add</button>
   </form>
 
   <!-- Calendar -->
@@ -51,23 +55,22 @@
   <script>
     const calendar = document.getElementById("calendar");
 
-    // Get current month and year
+    // Get current month/year
     let today = new Date();
     let year = today.getFullYear();
     let month = today.getMonth();
 
-    // Create calendar
     function buildCalendar() {
       calendar.innerHTML = "";
       let firstDay = new Date(year, month, 1).getDay();
       let daysInMonth = new Date(year, month + 1, 0).getDate();
 
-      // Empty cells before first day
+      // Empty cells before month starts
       for (let i = 0; i < firstDay; i++) {
         calendar.appendChild(document.createElement("div"));
       }
 
-      // Create days
+      // Add days
       for (let d = 1; d <= daysInMonth; d++) {
         let dayBox = document.createElement("div");
         dayBox.className = "day";
@@ -77,12 +80,11 @@
       }
     }
 
-    // Add flight to calendar
+    // Add event (class/assignment/exam)
     document.getElementById("addForm").addEventListener("submit", function(e) {
       e.preventDefault();
-      let flight = document.getElementById("flight").value;
-      let from = document.getElementById("from").value;
-      let to = document.getElementById("to").value;
+      let title = document.getElementById("title").value;
+      let type = document.getElementById("type").value;
       let date = new Date(document.getElementById("date").value);
 
       let dateAttr = `${date.getFullYear()}-${date.getMonth()+1}-${date.getDate()}`;
@@ -91,7 +93,7 @@
       if (dayBox) {
         let div = document.createElement("div");
         div.className = "event";
-        div.innerText = `${flight}: ${from} → ${to}`;
+        div.innerText = `${type}: ${title}`;
         dayBox.appendChild(div);
       }
 
