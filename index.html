@@ -54,11 +54,15 @@
       <option value="Job">Job</option>
       <option value="Event">Event</option>
       <option value="Festival">Festival</option>
-    </select>
-    <label>Start:</label>
+    </select><br>
+    <label>Start Date:</label>
     <input type="date" id="startDate" required>
-    <label>End:</label>
+    <label>Start Time:</label>
+    <input type="time" id="startTime" required><br>
+    <label>End Date:</label>
     <input type="date" id="endDate" required>
+    <label>End Time:</label>
+    <input type="time" id="endTime" required><br>
     <label>Reminder:</label>
     <input type="datetime-local" id="reminder" required>
     <button type="submit">Add</button>
@@ -111,7 +115,7 @@
           if (dayBox) {
             let div = document.createElement("div");
             div.className = `event ${task.type}`;
-            div.innerText = `${task.type}: ${task.title}`;
+            div.innerText = `${task.type}: ${task.title}\n🕒 ${task.startTime} - ${task.endTime}`;
             dayBox.appendChild(div);
           }
           current.setDate(current.getDate() + 1);
@@ -119,21 +123,23 @@
       });
     }
 
-    // Add event (with start, end, and reminder)
+    // Add event (with date, time, and reminder)
     document.getElementById("addForm").addEventListener("submit", function(e) {
       e.preventDefault();
       let title = document.getElementById("title").value;
       let type = document.getElementById("type").value;
-      let start = document.getElementById("startDate").value;
-      let end = document.getElementById("endDate").value;
+      let startDate = document.getElementById("startDate").value;
+      let startTime = document.getElementById("startTime").value;
+      let endDate = document.getElementById("endDate").value;
+      let endTime = document.getElementById("endTime").value;
       let reminder = document.getElementById("reminder").value;
 
-      if (new Date(end) < new Date(start)) {
+      if (new Date(endDate) < new Date(startDate)) {
         alert("End date cannot be before start date!");
         return;
       }
 
-      let task = { title, type, start, end, reminder, notified: false };
+      let task = { title, type, start: startDate, end: endDate, startTime, endTime, reminder, notified: false };
       tasks.push(task);
       localStorage.setItem("tasks", JSON.stringify(tasks));
 
@@ -147,7 +153,7 @@
       tasks.forEach(task => {
         let reminderTime = new Date(task.reminder).getTime();
         if (!task.notified && reminderTime <= now) {
-          new Notification("⏰ Reminder", { body: `${task.type}: ${task.title}` });
+          new Notification("⏰ Reminder", { body: `${task.type}: ${task.title} at ${task.startTime}` });
           task.notified = true;
           localStorage.setItem("tasks", JSON.stringify(tasks));
         }
