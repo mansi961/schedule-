@@ -10,33 +10,20 @@
     .calendar-nav button { margin: 0 5px; padding: 5px 10px; }
     .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
     .day-header { text-align: center; font-weight: bold; background: #eee; padding: 5px; }
-    .day {
-      border: 1px solid #ccc;
-      min-height: 100px;
-      padding: 5px;
-      background: #fafafa;
-      position: relative;
-    }
+    .day { border: 1px solid #ccc; min-height: 100px; padding: 5px; background: #fafafa; position: relative; }
     .day h3 { margin: 0; font-size: 14px; text-align: right; }
-    .event {
-      margin-top: 3px;
-      padding: 3px;
-      border-radius: 3px;
-      font-size: 12px;
-      color: #fff;
-    }
+    .event { margin-top: 3px; padding: 3px; border-radius: 3px; font-size: 12px; color: #fff; }
     .Class { background: #007bff; }
     .Assignment { background: #28a745; }
     .Exam { background: #dc3545; }
     .Job { background: #fd7e14; }
     .Event { background: #6f42c1; }
     .Festival { background: #ffc107; color: #000; }
-    #addForm { margin: 20px 0; }
+    #addForm, #addClassForm { margin: 20px 0; }
     input, select, button { margin: 5px; padding: 6px; }
   </style>
 </head>
 <body>
-
 <h1>📚 College Calendar Schedule</h1>
 <div id="monthYear"></div>
 <div class="calendar-nav">
@@ -58,8 +45,9 @@
 <!-- Calendar Grid -->
 <div class="calendar" id="calendar"></div>
 
-<!-- Form to Add Events -->
+<!-- Form to Add Tasks -->
 <form id="addForm">
+  <h2>Add Task</h2>
   <input type="text" id="title" placeholder="Task/Class Name" required>
   <select id="type">
     <option value="Class">Class</option>
@@ -82,6 +70,34 @@
   <button type="submit">Add Task</button>
 </form>
 
+<!-- Form to Add Classes -->
+<form id="addClassForm">
+  <h2>Add Class</h2>
+  <input type="text" id="classTitle" placeholder="Class Name" required>
+  <input type="text" id="classLocation" placeholder="Location"><br>
+  <label>Start Date:</label>
+  <input type="date" id="classStartDate" required>
+  <label>Start Time:</label>
+  <input type="time" id="classStartTime" required><br>
+  <label>End Date:</label>
+  <input type="date" id="classEndDate" required>
+  <label>End Time:</label>
+  <input type="time" id="classEndTime" required><br>
+  <label>Recurring Days:</label>
+  <select id="classDays" multiple>
+    <option value="0">Sunday</option>
+    <option value="1">Monday</option>
+    <option value="2">Tuesday</option>
+    <option value="3">Wednesday</option>
+    <option value="4">Thursday</option>
+    <option value="5">Friday</option>
+    <option value="6">Saturday</option>
+  </select><br>
+  <label>Reminder:</label>
+  <input type="datetime-local" id="classReminder" required>
+  <button type="submit">Add Class</button>
+</form>
+
 <script>
 let calendar = document.getElementById("calendar");
 let monthYear = document.getElementById("monthYear");
@@ -100,7 +116,6 @@ function buildCalendar(date) {
   let firstDay = new Date(year, month, 1).getDay();
   let daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  // Empty cells before first day
   for (let i = 0; i < firstDay; i++) {
     let empty = document.createElement("div");
     empty.className = "day";
@@ -123,13 +138,21 @@ function renderTasks() {
     let start = new Date(task.start);
     let end = new Date(task.end);
     let current = new Date(start);
+
     while (current <= end) {
+      if (task.type === "Class" && task.days && task.days.length > 0) {
+        if (!task.days.includes(current.getDay())) {
+          current.setDate(current.getDate() + 1);
+          continue;
+        }
+      }
       let dateAttr = `${current.getFullYear()}-${current.getMonth()+1}-${current.getDate()}`;
       let dayBox = document.querySelector(`.day[data-date='${dateAttr}']`);
       if (dayBox) {
         let div = document.createElement("div");
         div.className = `event ${task.type}`;
-        div.innerText = `${task.type}: ${task.title}\n🕒 ${task.startTime} - ${task.endTime}`;
+        let locationText = task.location ? ` @ ${task.location}` : '';
+        div.innerText = `${task.type}: ${task.title}${locationText}\n🕒 ${task.startTime} - ${task.endTime}`;
         dayBox.appendChild(div);
       }
       current.setDate(current.getDate() + 1);
@@ -156,7 +179,28 @@ document.getElementById("addForm").addEventListener("submit", function(e) {
   this.reset();
 });
 
-// Reminder Check
+// Add Class
+document.getElementById("addClassForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  let classTask = {
+    title: document.getElementById("classTitle").value,
+    location: document.getElementById("classLocation").value,
+    type: "Class",
+    start: document.getElementById("classStartDate").value,
+    startTime: document.getElementById("classStartTime").value,
+    end: document.getElementById("classEndDate").value,
+    endTime: document.getElementById("classEndTime").value,
+    days: Array.from(document.getElementById("classDays").selectedOptions).map(opt => parseInt(opt.value)),
+    reminder: document.getElementById("classReminder").value,
+    notified: false
+  };
+  tasks.push(classTask);
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  buildCalendar(currentDate);
+  this.reset();
+});
+
+// Reminder check
 setInterval(() => {
   let now = new Date().getTime();
   tasks.forEach(task => {
