@@ -17,12 +17,20 @@
     }
     .day h3 { margin: 0; font-size: 14px; }
     .event {
-      background: #cce5ff;
       margin-top: 3px;
       padding: 3px;
       border-radius: 3px;
       font-size: 12px;
+      color: #fff;
     }
+    /* 🎨 Different colors for each type */
+    .Class { background: #007bff; }       /* Blue */
+    .Assignment { background: #28a745; }  /* Green */
+    .Exam { background: #dc3545; }        /* Red */
+    .Job { background: #fd7e14; }         /* Orange */
+    .Event { background: #6f42c1; }       /* Purple */
+    .Festival { background: #ffc107; color: #000; } /* Yellow with black text */
+
     #addForm { margin: 20px 0; }
     input, select, button { margin: 5px; padding: 6px; }
   </style>
@@ -30,7 +38,7 @@
 <body>
   <h1>📚 College Monthly Planner</h1>
 
-  <!-- Navigation (optional for more pages) -->
+  <!-- Navigation -->
   <nav>
     <a href="college-planner.html">Planner</a>
     <a href="about.html">About</a>
@@ -44,6 +52,8 @@
       <option value="Assignment">Assignment</option>
       <option value="Exam">Exam</option>
       <option value="Job">Job</option>
+      <option value="Event">Event</option>
+      <option value="Festival">Festival</option>
     </select>
     <label>Start:</label>
     <input type="date" id="startDate" required>
@@ -83,7 +93,7 @@
       }
     }
 
-    // Add event (class/assignment/exam/job) with start and end date
+    // Add event (with start and end date)
     document.getElementById("addForm").addEventListener("submit", function(e) {
       e.preventDefault();
       let title = document.getElementById("title").value;
@@ -104,7 +114,7 @@
 
         if (dayBox) {
           let div = document.createElement("div");
-          div.className = "event";
+          div.className = `event ${type}`;
           div.innerText = `${type}: ${title}`;
           dayBox.appendChild(div);
         }
