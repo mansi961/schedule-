@@ -19,6 +19,7 @@
   .assignment { background: #FF9800; }
   .exam { background: #F44336; }
   .event { background: #2196F3; }
+  .currentHour { background: #ffeb3b !important; color: black; } /* Highlight current hour */
   #taskModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
                background: white; border: 1px solid #ccc; padding: 20px; z-index: 1000; width: 300px; border-radius: 8px; }
   #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index:500; }
@@ -118,7 +119,33 @@ function buildWeek(date) {
     weekContainer.appendChild(dayCol);
   }
 
+  highlightCurrentHour();
   renderTasks();
+}
+
+// Highlight current day and hour
+function highlightCurrentHour() {
+  const now = new Date();
+  const currentDayStr = now.toDateString();
+  const currentHour = now.getHours();
+
+  const dayColumns = document.querySelectorAll(".dayColumn");
+  dayColumns.forEach(col => {
+    const dayStr = col.querySelector(".dayHeader").innerText;
+    const rows = col.querySelectorAll(".hourRow");
+    rows.forEach(row => row.classList.remove("currentHour"));
+    if(dayStr === currentDayStr) {
+      rows = col.querySelectorAll(".hourRow");
+      rows.forEach(row => {
+        const rowHour = parseInt(row.querySelector(".hourLabel").innerText.split(":")[0]);
+        if(rowHour === currentHour) {
+          row.classList.add("currentHour");
+        }
+      });
+    }
+  });
+  // Update every minute
+  setTimeout(highlightCurrentHour, 60000);
 }
 
 function openModal(day) {
