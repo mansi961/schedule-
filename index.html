@@ -3,17 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📅 Daily College Planner</title>
+<title>📅 Weekly College Planner</title>
 <style>
   body { font-family: Arial, sans-serif; margin: 20px; }
   h1 { text-align: center; }
-  #dateNav { text-align: center; margin-bottom: 10px; }
-  #dateNav button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
-  #dayContainer { max-width: 600px; margin: 0 auto; border: 1px solid #ccc; }
-  .hourRow { display: flex; border-bottom: 1px solid #ddd; min-height: 40px; align-items: center; padding: 0 5px; position: relative; }
-  .hourLabel { width: 50px; font-weight: bold; }
-  .tasks { flex: 1; position: relative; }
-  .task { position: absolute; left: 0; right: 0; padding: 3px 5px; margin: 1px 0; border-radius: 5px; font-size: 12px; color: white; }
+  #weekNav { text-align: center; margin-bottom: 10px; }
+  #weekNav button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
+  #weekContainer { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; max-width: 1200px; margin: 0 auto; }
+  .dayColumn { border: 1px solid #ccc; background: #f9f9f9; }
+  .dayHeader { background: #eee; font-weight: bold; padding: 5px; text-align: center; }
+  .hourRow { border-top: 1px solid #ddd; min-height: 40px; position: relative; cursor: pointer; padding: 0 3px; }
+  .hourLabel { font-size: 10px; position: absolute; left: 3px; top: 2px; }
+  .task { position: absolute; left: 0; right: 0; padding: 2px 5px; margin: 1px 0; border-radius: 4px; font-size: 12px; color: white; }
   .class { background: #4CAF50; }
   .assignment { background: #FF9800; }
   .exam { background: #F44336; }
@@ -27,14 +28,14 @@
 </head>
 <body>
 
-<h1>📅 Daily College Planner</h1>
-<div id="dateNav">
-  <button onclick="prevDay()">⟨ Prev Day</button>
-  <span id="currentDate"></span>
-  <button onclick="nextDay()">Next Day ⟩</button>
+<h1>📅 Weekly College Planner</h1>
+<div id="weekNav">
+  <button onclick="prevWeek()">⟨ Prev Week</button>
+  <span id="weekRange"></span>
+  <button onclick="nextWeek()">Next Week ⟩</button>
 </div>
 
-<div id="dayContainer"></div>
+<div id="weekContainer"></div>
 
 <div id="overlay"></div>
 <div id="taskModal">
@@ -59,42 +60,69 @@
 </div>
 
 <script>
-let dayContainer = document.getElementById("dayContainer");
+let weekContainer = document.getElementById("weekContainer");
 let taskModal = document.getElementById("taskModal");
 let overlay = document.getElementById("overlay");
-let currentDateEl = document.getElementById("currentDate");
-let selectedDate = null;
+let weekRangeEl = document.getElementById("weekRange");
+
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-
 let currentDate = new Date();
+let selectedDay = null;
 
-function buildDay(date) {
-  dayContainer.innerHTML = "";
-  currentDateEl.innerText = date.toDateString();
-  const year = date.getFullYear();
-  const month = date.getMonth()+1;
-  const day = date.getDate();
-  selectedDate = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+function getWeekStart(date) {
+  let d = new Date(date);
+  let day = d.getDay();
+  d.setDate(d.getDate() - day); // Sunday as start
+  return d;
+}
 
-  for(let hour=0; hour<24; hour++) {
-    const row = document.createElement("div");
-    row.classList.add("hourRow");
-    const label = document.createElement("div");
-    label.classList.add("hourLabel");
-    label.innerText = `${String(hour).padStart(2,'0')}:00`;
-    const taskArea = document.createElement("div");
-    taskArea.classList.add("tasks");
-    taskArea.onclick = () => openModal(hour);
+function formatDate(date) {
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
 
-    row.appendChild(label);
-    row.appendChild(taskArea);
-    dayContainer.appendChild(row);
+function buildWeek(date) {
+  weekContainer.innerHTML = "";
+  const startOfWeek = getWeekStart(date);
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(endOfWeek.getDate()+6);
+  weekRangeEl.innerText = `${startOfWeek.toDateString()} - ${endOfWeek.toDateString()}`;
+
+  for(let d=0; d<7; d++) {
+    const dayDate = new Date(startOfWeek);
+    dayDate.setDate(dayDate.getDate()+d);
+    const dayCol = document.createElement("div");
+    dayCol.classList.add("dayColumn");
+
+    const header = document.createElement("div");
+    header.classList.add("dayHeader");
+    header.innerText = dayDate.toDateString();
+    dayCol.appendChild(header);
+
+    for(let hour=0; hour<24; hour++) {
+      const hourRow = document.createElement("div");
+      hourRow.classList.add("hourRow");
+      hourRow.onclick = () => openModal(dayDate);
+
+      const label = document.createElement("div");
+      label.classList.add("hourLabel");
+      label.innerText = `${String(hour).padStart(2,'0')}:00`;
+      hourRow.appendChild(label);
+
+      const taskArea = document.createElement("div");
+      taskArea.classList.add("tasks");
+      hourRow.appendChild(taskArea);
+
+      dayCol.appendChild(hourRow);
+    }
+
+    weekContainer.appendChild(dayCol);
   }
 
   renderTasks();
 }
 
-function openModal(hour) {
+function openModal(day) {
+  selectedDay = formatDate(day);
   taskModal.style.display = "block";
   overlay.style.display = "block";
 }
@@ -113,13 +141,13 @@ function saveTask() {
 
   if(!name || !startTime || !endTime) return alert("Please enter name, start and end time!");
 
-  const task = { date:selectedDate, name, startTime, endTime, location, type };
+  const task = { date:selectedDay, name, startTime, endTime, location, type };
   tasks.push(task);
   localStorage.setItem("tasks", JSON.stringify(tasks));
 
   closeModal();
   clearForm();
-  buildDay(new Date(selectedDate));
+  buildWeek(currentDate);
 }
 
 function clearForm() {
@@ -130,37 +158,41 @@ function clearForm() {
 }
 
 function renderTasks() {
-  const rows = document.querySelectorAll(".hourRow");
-  rows.forEach(row => {
-    const hourLabel = row.querySelector(".hourLabel").innerText;
-    const taskArea = row.querySelector(".tasks");
-    taskArea.innerHTML = "";
-    tasks.forEach(task => {
-      if(task.date === selectedDate) {
-        const taskStartHour = parseInt(task.startTime.split(":")[0]);
-        const taskEndHour = parseInt(task.endTime.split(":")[0]);
-        if(parseInt(hourLabel.split(":")[0]) >= taskStartHour && parseInt(hourLabel.split(":")[0]) <= taskEndHour) {
-          const div = document.createElement("div");
-          div.classList.add("task", task.type);
-          div.innerText = `${task.startTime}-${task.endTime} ${task.name} @${task.location}`;
-          taskArea.appendChild(div);
+  const dayColumns = document.querySelectorAll(".dayColumn");
+  dayColumns.forEach(col => {
+    const date = formatDate(new Date(col.querySelector(".dayHeader").innerText));
+    const rows = col.querySelectorAll(".hourRow");
+    rows.forEach(row => {
+      const taskArea = row.querySelector(".tasks");
+      taskArea.innerHTML="";
+      tasks.forEach(task => {
+        if(task.date === date) {
+          const taskStartHour = parseInt(task.startTime.split(":")[0]);
+          const taskEndHour = parseInt(task.endTime.split(":")[0]);
+          const rowHour = parseInt(row.querySelector(".hourLabel").innerText.split(":")[0]);
+          if(rowHour >= taskStartHour && rowHour <= taskEndHour) {
+            const div = document.createElement("div");
+            div.classList.add("task", task.type);
+            div.innerText = `${task.startTime}-${task.endTime} ${task.name} @${task.location}`;
+            taskArea.appendChild(div);
+          }
         }
-      }
+      });
     });
   });
 }
 
-function prevDay() {
-  currentDate.setDate(currentDate.getDate()-1);
-  buildDay(currentDate);
+function prevWeek() {
+  currentDate.setDate(currentDate.getDate()-7);
+  buildWeek(currentDate);
 }
 
-function nextDay() {
-  currentDate.setDate(currentDate.getDate()+1);
-  buildDay(currentDate);
+function nextWeek() {
+  currentDate.setDate(currentDate.getDate()+7);
+  buildWeek(currentDate);
 }
 
-buildDay(currentDate);
+buildWeek(currentDate);
 </script>
 
 </body>
