@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>📚 College Planner</title>
+  <title>📅 Weekly Planner</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -12,22 +12,39 @@
     h1 {
       text-align: center;
     }
-    .calendar {
+    .week-nav {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .week-nav button {
+      padding: 6px 12px;
+      margin: 0 5px;
+      background: #1976d2;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .week-nav button:hover {
+      background: #0d47a1;
+    }
+    .week {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
       gap: 5px;
-      margin: 20px auto;
-      max-width: 700px;
+      margin: 0 auto;
+      max-width: 1000px;
     }
     .day {
       background: white;
-      padding: 15px;
+      padding: 10px;
       border: 1px solid #ddd;
       cursor: pointer;
-      text-align: center;
     }
-    .day:hover {
-      background: #e3f2fd;
+    .day h3 {
+      margin-top: 0;
+      font-size: 14px;
+      text-align: center;
     }
     #taskForm {
       display: none;
@@ -47,7 +64,7 @@
       padding: 5px;
       margin-top: 3px;
     }
-    button {
+    button.save-btn {
       margin-top: 12px;
       padding: 8px 14px;
       background: #1976d2;
@@ -56,29 +73,33 @@
       border-radius: 6px;
       cursor: pointer;
     }
-    button:hover {
+    button.save-btn:hover {
       background: #0d47a1;
-    }
-    .task-list {
-      margin-top: 20px;
     }
     .task-item {
       background: #fff3cd;
       border: 1px solid #ffeeba;
-      padding: 10px;
-      margin-bottom: 8px;
+      padding: 6px;
+      margin-top: 6px;
       border-radius: 6px;
+      font-size: 13px;
     }
   </style>
 </head>
 <body>
 
-<h1>📚 College Planner - August 2025</h1>
+<h1>📅 Weekly Planner</h1>
 
-<div class="calendar" id="calendar"></div>
+<div class="week-nav">
+  <button onclick="prevWeek()">⟨ Prev Week</button>
+  <span id="weekRange"></span>
+  <button onclick="nextWeek()">Next Week ⟩</button>
+</div>
+
+<div class="week" id="week"></div>
 
 <div id="taskForm">
-  <h3>Add Task/Class for <span id="selectedDate"></span></h3>
+  <h3>Add Task for <span id="selectedDate"></span></h3>
   <label>Title:</label>
   <input type="text" id="title" placeholder="Class or Task Name">
 
@@ -91,32 +112,57 @@
   <label>Reminder:</label>
   <input type="datetime-local" id="reminder">
 
-  <button onclick="saveTask()">Save</button>
+  <button class="save-btn" onclick="saveTask()">Save</button>
 </div>
 
-<div class="task-list" id="taskList"></div>
-
 <script>
-  const calendar = document.getElementById("calendar");
+  const weekContainer = document.getElementById("week");
   const taskForm = document.getElementById("taskForm");
   const selectedDateEl = document.getElementById("selectedDate");
-  const taskList = document.getElementById("taskList");
+  const weekRangeEl = document.getElementById("weekRange");
 
   let selectedDate = null;
-  let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+  let tasks = JSON.parse(localStorage.getItem("weeklyTasks")) || [];
+  let currentWeekStart = getWeekStart(new Date());
 
-  // Build August 2025 Calendar
-  const daysInMonth = 31;
-  for (let i = 1; i <= daysInMonth; i++) {
-    const day = document.createElement("div");
-    day.className = "day";
-    day.textContent = i;
-    day.onclick = () => openTaskForm(i);
-    calendar.appendChild(day);
+  function getWeekStart(date) {
+    const day = date.getDay(); // 0=Sun
+    const diff = date.getDate() - day;
+    return new Date(date.setDate(diff));
   }
 
-  function openTaskForm(day) {
-    selectedDate = `2025-08-${String(day).padStart(2,"0")}`;
+  function buildWeek(startDate) {
+    weekContainer.innerHTML = "";
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 6);
+    weekRangeEl.textContent =
+      `${startDate.toDateString()} - ${endDate.toDateString()}`;
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(startDate);
+      d.setDate(startDate.getDate() + i);
+
+      const dayDiv = document.createElement("div");
+      dayDiv.className = "day";
+      dayDiv.innerHTML = `<h3>${d.toLocaleDateString("en-US", {weekday: "short"})}<br>${d.getDate()}</h3>`;
+
+      dayDiv.onclick = () => openTaskForm(d);
+
+      // Render tasks for this day
+      tasks.filter(t => t.date === d.toISOString().split("T")[0])
+           .forEach(t => {
+              const div = document.createElement("div");
+              div.className = "task-item";
+              div.innerHTML = `<b>${t.title}</b> @ ${t.time}<br>📍 ${t.location || "No location"}<br>⏰ ${t.reminder || "None"}`;
+              dayDiv.appendChild(div);
+           });
+
+      weekContainer.appendChild(dayDiv);
+    }
+  }
+
+  function openTaskForm(date) {
+    selectedDate = date.toISOString().split("T")[0];
     selectedDateEl.textContent = selectedDate;
     taskForm.style.display = "block";
   }
@@ -128,29 +174,28 @@
     const reminder = document.getElementById("reminder").value;
 
     if (!title || !time) {
-      alert("Please enter at least a title and time.");
+      alert("Please enter a title and time.");
       return;
     }
 
     const task = { date: selectedDate, title, location, time, reminder };
     tasks.push(task);
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-    renderTasks();
+    localStorage.setItem("weeklyTasks", JSON.stringify(tasks));
+    buildWeek(currentWeekStart);
     taskForm.style.display = "none";
   }
 
-  function renderTasks() {
-    taskList.innerHTML = "<h2>📌 Your Schedule</h2>";
-    tasks.forEach((t, i) => {
-      const div = document.createElement("div");
-      div.className = "task-item";
-      div.innerHTML = `<b>${t.date}</b> - ${t.title} @ ${t.time} <br>📍 ${t.location || "No location"} 
-                       <br>⏰ Reminder: ${t.reminder || "None"}`;
-      taskList.appendChild(div);
-    });
+  function prevWeek() {
+    currentWeekStart.setDate(currentWeekStart.getDate() - 7);
+    buildWeek(currentWeekStart);
   }
 
-  renderTasks();
+  function nextWeek() {
+    currentWeekStart.setDate(currentWeekStart.getDate() + 7);
+    buildWeek(currentWeekStart);
+  }
+
+  buildWeek(currentWeekStart);
 </script>
 
 </body>
