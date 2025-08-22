@@ -3,9 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Weekly College Planner</title>
+<title>📅 College Planner Calendar</title>
 <style>
   body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
+  #monthYear { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
+  .calendar-nav button { padding: 5px 10px; margin: 5px; cursor: pointer; }
   #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin: 20px auto; max-width: 900px; }
   .day { border: 1px solid #ccc; padding: 15px; cursor: pointer; min-height: 120px; position: relative; }
   .header { font-weight: bold; background: #f4f4f4; }
@@ -22,7 +24,13 @@
 </head>
 <body>
 
-<h1>📅 Weekly College Planner</h1>
+<h1>📅 College Planner</h1>
+<div id="monthYear"></div>
+<div class="calendar-nav">
+  <button onclick="prevMonth()">⟨ Prev</button>
+  <button onclick="nextMonth()">Next ⟩</button>
+</div>
+
 <div id="calendar"></div>
 
 <div id="overlay"></div>
@@ -43,39 +51,50 @@
 </div>
 
 <script>
-const calendar = document.getElementById("calendar");
-const modal = document.getElementById("taskModal");
-const overlay = document.getElementById("overlay");
+let calendar = document.getElementById("calendar");
+let modal = document.getElementById("taskModal");
+let overlay = document.getElementById("overlay");
+let monthYear = document.getElementById("monthYear");
 let selectedDate = null;
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
-// Create headers for the week
-const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-days.forEach(d => {
-  const div = document.createElement("div");
-  div.classList.add("header");
-  div.innerText = d;
-  calendar.appendChild(div);
-});
+let currentDate = new Date();
 
-// Generate current week (Sunday to Saturday)
-const today = new Date();
-const sunday = new Date(today);
-sunday.setDate(today.getDate() - today.getDay()); // get Sunday of current week
-let weekDates = [];
-for (let i = 0; i < 7; i++) {
-  const dayDiv = document.createElement("div");
-  dayDiv.classList.add("day");
-  const date = new Date(sunday);
-  date.setDate(sunday.getDate() + i);
-  const display = `${date.getMonth()+1}/${date.getDate()}`;
-  dayDiv.innerHTML = `<strong>${display}</strong>`;
-  dayDiv.onclick = () => openModal(display);
-  calendar.appendChild(dayDiv);
-  weekDates.push(display);
+function buildCalendar(date) {
+  calendar.innerHTML = "";
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  monthYear.innerText = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+  const daysOfWeek = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  daysOfWeek.forEach(d => {
+    const header = document.createElement("div");
+    header.innerText = d;
+    header.classList.add("header");
+    calendar.appendChild(header);
+  });
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const totalDays = new Date(year, month+1, 0).getDate();
+
+  for(let i=0;i<firstDay;i++) {
+    const empty = document.createElement("div");
+    calendar.appendChild(empty);
+  }
+
+  for(let d=1; d<=totalDays; d++) {
+    const dayDiv = document.createElement("div");
+    dayDiv.classList.add("day");
+    dayDiv.innerHTML = `<strong>${d}</strong>`;
+    dayDiv.onclick = () => openModal(d, month, year);
+    calendar.appendChild(dayDiv);
+  }
+
+  renderTasks();
 }
 
-function openModal(day) {
-  selectedDate = day;
+function openModal(day, month, year) {
+  selectedDate = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
   modal.style.display = "block";
   overlay.style.display = "block";
 }
@@ -92,25 +111,53 @@ function saveTask() {
   const location = document.getElementById("taskLocation").value;
   const type = document.getElementById("taskType").value;
 
-  if (!name || !startTime || !endTime) return alert("Please enter task name, start, and end time!");
+  if(!name || !startTime || !endTime) return alert("Please enter name, start and end time!");
 
-  const taskDiv = document.createElement("div");
-  taskDiv.classList.add("task", type);
-  taskDiv.innerText = `${startTime} - ${endTime} : ${name} @ ${location}`;
-
-  const dayDivs = document.querySelectorAll(".day");
-  dayDivs.forEach(d => {
-    if (d.innerText.includes(selectedDate)) {
-      d.appendChild(taskDiv);
-    }
-  });
+  const task = { date:selectedDate, name, startTime, endTime, location, type };
+  tasks.push(task);
+  localStorage.setItem("tasks", JSON.stringify(tasks));
 
   closeModal();
-  document.getElementById("taskName").value = "";
-  document.getElementById("startTime").value = "";
-  document.getElementById("endTime").value = "";
-  document.getElementById("taskLocation").value = "";
+  clearForm();
+  buildCalendar(currentDate);
 }
+
+function clearForm() {
+  document.getElementById("taskName").value="";
+  document.getElementById("startTime").value="";
+  document.getElementById("endTime").value="";
+  document.getElementById("taskLocation").value="";
+}
+
+function renderTasks() {
+  const dayDivs = document.querySelectorAll(".day");
+  dayDivs.forEach(d => {
+    const dayNumber = d.querySelector("strong").innerText;
+    const month = currentDate.getMonth();
+    const year = currentDate.getFullYear();
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(dayNumber).padStart(2,'0')}`;
+    tasks.forEach(task => {
+      if(task.date === dateStr) {
+        const div = document.createElement("div");
+        div.classList.add("task", task.type);
+        div.innerText = `${task.startTime} - ${task.endTime} : ${task.name} @ ${task.location}`;
+        d.appendChild(div);
+      }
+    });
+  });
+}
+
+function prevMonth() {
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  buildCalendar(currentDate);
+}
+
+function nextMonth() {
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  buildCalendar(currentDate);
+}
+
+buildCalendar(currentDate);
 </script>
 </body>
 </html>
