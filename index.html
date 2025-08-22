@@ -2,74 +2,156 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>College Calendar</title>
+  <title>📚 College Planner</title>
   <style>
-    body { font-family: Arial, sans-serif; }
-    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-    .day { border: 1px solid #ccc; padding: 10px; text-align: center; cursor: pointer; }
-    .modal {
-      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5); justify-content: center; align-items: center;
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
     }
-    .modal-content {
-      background: white; padding: 20px; border-radius: 8px; width: 300px;
+    h1 {
+      text-align: center;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      margin: 20px auto;
+      max-width: 700px;
+    }
+    .day {
+      background: white;
+      padding: 15px;
+      border: 1px solid #ddd;
+      cursor: pointer;
+      text-align: center;
+    }
+    .day:hover {
+      background: #e3f2fd;
+    }
+    #taskForm {
+      display: none;
+      margin-top: 20px;
+      padding: 15px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      max-width: 400px;
+    }
+    label {
+      display: block;
+      margin-top: 8px;
+    }
+    input, select {
+      width: 100%;
+      padding: 5px;
+      margin-top: 3px;
+    }
+    button {
+      margin-top: 12px;
+      padding: 8px 14px;
+      background: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0d47a1;
+    }
+    .task-list {
+      margin-top: 20px;
+    }
+    .task-item {
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 6px;
     }
   </style>
 </head>
 <body>
-  <h2>📚 College Calendar – August 2025</h2>
-  <div class="calendar" id="calendar"></div>
 
-  <!-- Reminder Modal -->
-  <div class="modal" id="reminderModal">
-    <div class="modal-content">
-      <h3>Add Reminder</h3>
-      <form id="reminderForm">
-        <label>Task/Class Name:</label><br>
-        <input type="text" id="taskName" required><br><br>
-        
-        <label>Date:</label><br>
-        <input type="date" id="taskDate" required><br><br>
+<h1>📚 College Planner - August 2025</h1>
 
-        <label>Time:</label><br>
-        <input type="time" id="taskTime"><br><br>
+<div class="calendar" id="calendar"></div>
 
-        <button type="submit">Save Reminder</button>
-        <button type="button" onclick="closeModal()">Cancel</button>
-      </form>
-    </div>
-  </div>
+<div id="taskForm">
+  <h3>Add Task/Class for <span id="selectedDate"></span></h3>
+  <label>Title:</label>
+  <input type="text" id="title" placeholder="Class or Task Name">
 
-  <script>
-    // Generate simple calendar for August 2025
-    const calendar = document.getElementById("calendar");
-    for (let i = 1; i <= 31; i++) {
-      let day = document.createElement("div");
-      day.className = "day";
-      day.textContent = i;
-      day.dataset.date = `2025-08-${String(i).padStart(2,'0')}`;
-      day.addEventListener("click", openModal);
-      calendar.appendChild(day);
+  <label>Location:</label>
+  <input type="text" id="location" placeholder="e.g. Room 204, Library">
+
+  <label>Time:</label>
+  <input type="time" id="time">
+
+  <label>Reminder:</label>
+  <input type="datetime-local" id="reminder">
+
+  <button onclick="saveTask()">Save</button>
+</div>
+
+<div class="task-list" id="taskList"></div>
+
+<script>
+  const calendar = document.getElementById("calendar");
+  const taskForm = document.getElementById("taskForm");
+  const selectedDateEl = document.getElementById("selectedDate");
+  const taskList = document.getElementById("taskList");
+
+  let selectedDate = null;
+  let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+
+  // Build August 2025 Calendar
+  const daysInMonth = 31;
+  for (let i = 1; i <= daysInMonth; i++) {
+    const day = document.createElement("div");
+    day.className = "day";
+    day.textContent = i;
+    day.onclick = () => openTaskForm(i);
+    calendar.appendChild(day);
+  }
+
+  function openTaskForm(day) {
+    selectedDate = `2025-08-${String(day).padStart(2,"0")}`;
+    selectedDateEl.textContent = selectedDate;
+    taskForm.style.display = "block";
+  }
+
+  function saveTask() {
+    const title = document.getElementById("title").value;
+    const location = document.getElementById("location").value;
+    const time = document.getElementById("time").value;
+    const reminder = document.getElementById("reminder").value;
+
+    if (!title || !time) {
+      alert("Please enter at least a title and time.");
+      return;
     }
 
-    const modal = document.getElementById("reminderModal");
-    const taskDate = document.getElementById("taskDate");
+    const task = { date: selectedDate, title, location, time, reminder };
+    tasks.push(task);
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+    renderTasks();
+    taskForm.style.display = "none";
+  }
 
-    function openModal(e) {
-      let selectedDate = e.target.dataset.date;
-      taskDate.value = selectedDate;
-      modal.style.display = "flex";
-    }
-    function closeModal() {
-      modal.style.display = "none";
-    }
-
-    // Save Reminder
-    document.getElementById("reminderForm").addEventListener("submit", function(e){
-      e.preventDefault();
-      alert("Reminder saved for " + taskDate.value + " – " + document.getElementById("taskName").value);
-      closeModal();
+  function renderTasks() {
+    taskList.innerHTML = "<h2>📌 Your Schedule</h2>";
+    tasks.forEach((t, i) => {
+      const div = document.createElement("div");
+      div.className = "task-item";
+      div.innerHTML = `<b>${t.date}</b> - ${t.title} @ ${t.time} <br>📍 ${t.location || "No location"} 
+                       <br>⏰ Reminder: ${t.reminder || "None"}`;
+      taskList.appendChild(div);
     });
-  </script>
+  }
+
+  renderTasks();
+</script>
+
 </body>
 </html>
