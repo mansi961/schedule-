@@ -2,134 +2,108 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>College Planner Calendar</title>
+  <title>📚 College Calendar Planner</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; }
-    #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin: 20px; }
-    .day { border: 1px solid #ccc; padding: 10px; min-height: 100px; position: relative; cursor: pointer; }
-    .day:hover { background: #f5f5f5; }
-    .task { font-size: 12px; margin: 2px 0; padding: 2px; border-radius: 4px; color: white; cursor: pointer; }
-    .Class { background: #2196F3; }     /* Blue */
-    .Assignment { background: #4CAF50; }/* Green */
-    .Exam { background: #F44336; }      /* Red */
-    .Event { background: #FFC107; color: black; } /* Yellow */
-    .Reminder { background: #9C27B0; }  /* Purple */
-    #taskForm { display: none; position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
-                background: white; padding: 20px; border: 1px solid #333; }
-    #taskDetails { display: none; position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
-                   background: white; padding: 20px; border: 1px solid #333; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+    }
+    .day {
+      border: 1px solid #ccc;
+      padding: 5px;
+      min-height: 100px;
+      position: relative;
+    }
+    .date {
+      font-weight: bold;
+    }
+    .task {
+      margin: 3px 0;
+      padding: 2px 5px;
+      border-radius: 5px;
+      font-size: 12px;
+      color: white;
+    }
+    .class { background-color: #4a90e2; }    /* Blue */
+    .assignment { background-color: #50c878; } /* Green */
+    .exam { background-color: #e74c3c; }       /* Red */
+    .event { background-color: #f1c40f; color: black; } /* Yellow */
+    .form-section {
+      margin-top: 20px;
+    }
   </style>
 </head>
 <body>
-  <h1>📅 College Planner Calendar</h1>
-  <div id="calendar"></div>
 
-  <!-- Add Task Form -->
-  <div id="taskForm">
-    <h3>Add Task</h3>
-    <input type="text" id="taskTitle" placeholder="Task Title"><br><br>
-    <input type="time" id="taskTime"><br><br>
-    <input type="text" id="taskLocation" placeholder="Location"><br><br>
-    <select id="taskCategory">
-      <option>Class</option>
-      <option>Assignment</option>
-      <option>Exam</option>
-      <option>Event</option>
-      <option>Reminder</option>
+  <h2>📚 College Calendar Planner - August 2025</h2>
+  
+  <div class="calendar" id="calendar"></div>
+
+  <div class="form-section">
+    <h3>Add Task / Class</h3>
+    <label>Category:</label>
+    <select id="category">
+      <option value="class">Class</option>
+      <option value="assignment">Assignment</option>
+      <option value="exam">Exam</option>
+      <option value="event">Event</option>
     </select><br><br>
-    <button onclick="saveTask()">Save</button>
-    <button onclick="closeForm()">Cancel</button>
+
+    <label>Title:</label>
+    <input type="text" id="title"><br><br>
+
+    <label>Location:</label>
+    <input type="text" id="location"><br><br>
+
+    <label>Date:</label>
+    <input type="date" id="date"><br><br>
+
+    <label>Time:</label>
+    <input type="time" id="time"><br><br>
+
+    <button onclick="addTask()">Add</button>
   </div>
 
-  <!-- Task Details -->
-  <div id="taskDetails">
-    <h3>Task Details</h3>
-    <p id="detailsText"></p>
-    <button onclick="closeDetails()">Close</button>
-  </div>
-
-<script>
-  const calendar = document.getElementById("calendar");
-  const taskForm = document.getElementById("taskForm");
-  const taskDetails = document.getElementById("taskDetails");
-  const detailsText = document.getElementById("detailsText");
-
-  let tasks = {};
-  let selectedDate = null;
-
-  // Generate simple monthly calendar
-  function generateCalendar() {
-    calendar.innerHTML = "";
-    for (let i = 1; i <= 30; i++) {
-      let day = document.createElement("div");
-      day.className = "day";
-      day.innerHTML = `<strong>${i}</strong>`;
-      day.onclick = () => openForm(i);
-      calendar.appendChild(day);
+  <script>
+    // Generate calendar for August 2025
+    const calendar = document.getElementById("calendar");
+    const daysInMonth = 31;
+    for (let i = 1; i <= daysInMonth; i++) {
+      const dayDiv = document.createElement("div");
+      dayDiv.className = "day";
+      dayDiv.id = "day-" + i;
+      dayDiv.innerHTML = `<div class="date">${i}</div>`;
+      calendar.appendChild(dayDiv);
     }
-    renderTasks();
-  }
 
-  function openForm(date) {
-    selectedDate = date;
-    taskForm.style.display = "block";
-  }
-  function closeForm() {
-    taskForm.style.display = "none";
-  }
+    function addTask() {
+      const category = document.getElementById("category").value;
+      const title = document.getElementById("title").value;
+      const location = document.getElementById("location").value;
+      const date = new Date(document.getElementById("date").value);
+      const time = document.getElementById("time").value;
 
-  function saveTask() {
-    let title = document.getElementById("taskTitle").value;
-    let time = document.getElementById("taskTime").value;
-    let location = document.getElementById("taskLocation").value;
-    let category = document.getElementById("taskCategory").value;
-
-    if (!tasks[selectedDate]) tasks[selectedDate] = [];
-    tasks[selectedDate].push({ title, time, location, category });
-
-    // Reminder Notification
-    if (time) {
-      let now = new Date();
-      let eventTime = new Date();
-      eventTime.setHours(time.split(":")[0], time.split(":")[1], 0);
-      let diff = eventTime - now;
-      if (diff > 0) {
-        setTimeout(() => {
-          alert(`⏰ Reminder: ${title} at ${time} (${location})`);
-        }, diff);
+      if (!title || !date || isNaN(date.getTime())) {
+        alert("Please fill in title and valid date.");
+        return;
       }
+
+      const day = date.getDate();
+      const taskDiv = document.createElement("div");
+      taskDiv.className = "task " + category;
+      taskDiv.textContent = `${title} @ ${time || "N/A"} (${location || "No Location"})`;
+
+      document.getElementById("day-" + day).appendChild(taskDiv);
     }
+  </script>
 
-    closeForm();
-    generateCalendar();
-  }
-
-  function renderTasks() {
-    for (let date in tasks) {
-      let day = calendar.children[date - 1];
-      tasks[date].forEach(task => {
-        let div = document.createElement("div");
-        div.className = `task ${task.category}`;
-        div.innerText = task.title;
-        div.onclick = (e) => {
-          e.stopPropagation();
-          showDetails(task);
-        };
-        day.appendChild(div);
-      });
-    }
-  }
-
-  function showDetails(task) {
-    detailsText.innerText = `${task.title}\n⏰ ${task.time}\n📍 ${task.location}\n📂 ${task.category}`;
-    taskDetails.style.display = "block";
-  }
-  function closeDetails() {
-    taskDetails.style.display = "none";
-  }
-
-  generateCalendar();
-</script>
 </body>
 </html>
