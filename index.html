@@ -3,104 +3,104 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📅 College Planner Calendar</title>
+<title>📅 Daily College Planner</title>
 <style>
-  body { font-family: Arial, sans-serif; text-align: center; margin: 20px; }
-  #monthYear { font-size: 20px; font-weight: bold; margin-bottom: 10px; }
-  .calendar-nav button { padding: 5px 10px; margin: 5px; cursor: pointer; }
-  #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin: 20px auto; max-width: 900px; }
-  .day { border: 1px solid #ccc; padding: 15px; cursor: pointer; min-height: 120px; position: relative; }
-  .header { font-weight: bold; background: #f4f4f4; }
-  #taskModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-               background: white; border: 1px solid #ccc; padding: 20px; z-index: 1000; width: 300px; border-radius: 8px; }
-  #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index:500; }
-  #taskModal input, #taskModal select { display: block; margin: 10px 0; padding: 5px; width: 100%; }
-  .task { margin-top: 5px; padding: 3px; border-radius: 5px; color: white; font-size: 12px; }
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  h1 { text-align: center; }
+  #dateNav { text-align: center; margin-bottom: 10px; }
+  #dateNav button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
+  #dayContainer { max-width: 600px; margin: 0 auto; border: 1px solid #ccc; }
+  .hourRow { display: flex; border-bottom: 1px solid #ddd; min-height: 40px; align-items: center; padding: 0 5px; position: relative; }
+  .hourLabel { width: 50px; font-weight: bold; }
+  .tasks { flex: 1; position: relative; }
+  .task { position: absolute; left: 0; right: 0; padding: 3px 5px; margin: 1px 0; border-radius: 5px; font-size: 12px; color: white; }
   .class { background: #4CAF50; }
   .assignment { background: #FF9800; }
   .exam { background: #F44336; }
   .event { background: #2196F3; }
+  #taskModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+               background: white; border: 1px solid #ccc; padding: 20px; z-index: 1000; width: 300px; border-radius: 8px; }
+  #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index:500; }
+  #taskModal input, #taskModal select { display: block; margin: 10px 0; padding: 5px; width: 100%; }
+  button.saveBtn { margin-top: 10px; background: #1976d2; color: white; border: none; padding: 8px 14px; border-radius: 5px; cursor: pointer; }
 </style>
 </head>
 <body>
 
-<h1>📅 College Planner</h1>
-<div id="monthYear"></div>
-<div class="calendar-nav">
-  <button onclick="prevMonth()">⟨ Prev</button>
-  <button onclick="nextMonth()">Next ⟩</button>
+<h1>📅 Daily College Planner</h1>
+<div id="dateNav">
+  <button onclick="prevDay()">⟨ Prev Day</button>
+  <span id="currentDate"></span>
+  <button onclick="nextDay()">Next Day ⟩</button>
 </div>
 
-<div id="calendar"></div>
+<div id="dayContainer"></div>
 
 <div id="overlay"></div>
 <div id="taskModal">
   <h2>Add Task</h2>
+  <label>Task Name:</label>
   <input type="text" id="taskName" placeholder="Task name">
-  <input type="time" id="startTime" placeholder="Start time">
-  <input type="time" id="endTime" placeholder="End time">
+  <label>Start Time:</label>
+  <input type="time" id="startTime">
+  <label>End Time:</label>
+  <input type="time" id="endTime">
+  <label>Location:</label>
   <input type="text" id="taskLocation" placeholder="Location">
+  <label>Type:</label>
   <select id="taskType">
     <option value="class">Class</option>
     <option value="assignment">Assignment</option>
     <option value="exam">Exam</option>
     <option value="event">Event</option>
   </select>
-  <button onclick="saveTask()">Save</button>
+  <button class="saveBtn" onclick="saveTask()">Save</button>
   <button onclick="closeModal()">Cancel</button>
 </div>
 
 <script>
-let calendar = document.getElementById("calendar");
-let modal = document.getElementById("taskModal");
+let dayContainer = document.getElementById("dayContainer");
+let taskModal = document.getElementById("taskModal");
 let overlay = document.getElementById("overlay");
-let monthYear = document.getElementById("monthYear");
+let currentDateEl = document.getElementById("currentDate");
 let selectedDate = null;
 let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
 
 let currentDate = new Date();
 
-function buildCalendar(date) {
-  calendar.innerHTML = "";
+function buildDay(date) {
+  dayContainer.innerHTML = "";
+  currentDateEl.innerText = date.toDateString();
   const year = date.getFullYear();
-  const month = date.getMonth();
-  monthYear.innerText = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const month = date.getMonth()+1;
+  const day = date.getDate();
+  selectedDate = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
 
-  const daysOfWeek = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  daysOfWeek.forEach(d => {
-    const header = document.createElement("div");
-    header.innerText = d;
-    header.classList.add("header");
-    calendar.appendChild(header);
-  });
+  for(let hour=0; hour<24; hour++) {
+    const row = document.createElement("div");
+    row.classList.add("hourRow");
+    const label = document.createElement("div");
+    label.classList.add("hourLabel");
+    label.innerText = `${String(hour).padStart(2,'0')}:00`;
+    const taskArea = document.createElement("div");
+    taskArea.classList.add("tasks");
+    taskArea.onclick = () => openModal(hour);
 
-  const firstDay = new Date(year, month, 1).getDay();
-  const totalDays = new Date(year, month+1, 0).getDate();
-
-  for(let i=0;i<firstDay;i++) {
-    const empty = document.createElement("div");
-    calendar.appendChild(empty);
-  }
-
-  for(let d=1; d<=totalDays; d++) {
-    const dayDiv = document.createElement("div");
-    dayDiv.classList.add("day");
-    dayDiv.innerHTML = `<strong>${d}</strong>`;
-    dayDiv.onclick = () => openModal(d, month, year);
-    calendar.appendChild(dayDiv);
+    row.appendChild(label);
+    row.appendChild(taskArea);
+    dayContainer.appendChild(row);
   }
 
   renderTasks();
 }
 
-function openModal(day, month, year) {
-  selectedDate = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-  modal.style.display = "block";
+function openModal(hour) {
+  taskModal.style.display = "block";
   overlay.style.display = "block";
 }
 
 function closeModal() {
-  modal.style.display = "none";
+  taskModal.style.display = "none";
   overlay.style.display = "none";
 }
 
@@ -119,7 +119,7 @@ function saveTask() {
 
   closeModal();
   clearForm();
-  buildCalendar(currentDate);
+  buildDay(new Date(selectedDate));
 }
 
 function clearForm() {
@@ -130,34 +130,38 @@ function clearForm() {
 }
 
 function renderTasks() {
-  const dayDivs = document.querySelectorAll(".day");
-  dayDivs.forEach(d => {
-    const dayNumber = d.querySelector("strong").innerText;
-    const month = currentDate.getMonth();
-    const year = currentDate.getFullYear();
-    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(dayNumber).padStart(2,'0')}`;
+  const rows = document.querySelectorAll(".hourRow");
+  rows.forEach(row => {
+    const hourLabel = row.querySelector(".hourLabel").innerText;
+    const taskArea = row.querySelector(".tasks");
+    taskArea.innerHTML = "";
     tasks.forEach(task => {
-      if(task.date === dateStr) {
-        const div = document.createElement("div");
-        div.classList.add("task", task.type);
-        div.innerText = `${task.startTime} - ${task.endTime} : ${task.name} @ ${task.location}`;
-        d.appendChild(div);
+      if(task.date === selectedDate) {
+        const taskStartHour = parseInt(task.startTime.split(":")[0]);
+        const taskEndHour = parseInt(task.endTime.split(":")[0]);
+        if(parseInt(hourLabel.split(":")[0]) >= taskStartHour && parseInt(hourLabel.split(":")[0]) <= taskEndHour) {
+          const div = document.createElement("div");
+          div.classList.add("task", task.type);
+          div.innerText = `${task.startTime}-${task.endTime} ${task.name} @${task.location}`;
+          taskArea.appendChild(div);
+        }
       }
     });
   });
 }
 
-function prevMonth() {
-  currentDate.setMonth(currentDate.getMonth() - 1);
-  buildCalendar(currentDate);
+function prevDay() {
+  currentDate.setDate(currentDate.getDate()-1);
+  buildDay(currentDate);
 }
 
-function nextMonth() {
-  currentDate.setMonth(currentDate.getMonth() + 1);
-  buildCalendar(currentDate);
+function nextDay() {
+  currentDate.setDate(currentDate.getDate()+1);
+  buildDay(currentDate);
 }
 
-buildCalendar(currentDate);
+buildDay(currentDate);
 </script>
+
 </body>
 </html>
