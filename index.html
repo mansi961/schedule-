@@ -2,108 +2,112 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>📚 College Calendar Planner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>College Planner Calendar</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    h2 {
-      text-align: center;
-    }
-    .calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
-    }
-    .day {
-      border: 1px solid #ccc;
-      padding: 5px;
-      min-height: 100px;
-      position: relative;
-    }
-    .date {
-      font-weight: bold;
-    }
-    .task {
-      margin: 3px 0;
-      padding: 2px 5px;
-      border-radius: 5px;
-      font-size: 12px;
-      color: white;
-    }
-    .class { background-color: #4a90e2; }    /* Blue */
-    .assignment { background-color: #50c878; } /* Green */
-    .exam { background-color: #e74c3c; }       /* Red */
-    .event { background-color: #f1c40f; color: black; } /* Yellow */
-    .form-section {
-      margin-top: 20px;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; }
+    #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin: 20px auto; max-width: 700px; }
+    .day { border: 1px solid #ccc; padding: 20px; cursor: pointer; }
+    .header { font-weight: bold; background: #f4f4f4; }
+    #taskModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border: 1px solid #ccc; padding: 20px; z-index: 1000; }
+    #taskModal input, #taskModal select { display: block; margin: 10px 0; padding: 5px; width: 100%; }
+    #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 500; }
+    .task { margin-top: 5px; padding: 3px; border-radius: 5px; color: white; font-size: 12px; }
+    .class { background: #4CAF50; }
+    .assignment { background: #FF9800; }
+    .exam { background: #F44336; }
+    .event { background: #2196F3; }
   </style>
 </head>
 <body>
+  <h1>📅 College Planner Calendar</h1>
+  <div id="calendar"></div>
 
-  <h2>📚 College Calendar Planner - August 2025</h2>
-  
-  <div class="calendar" id="calendar"></div>
-
-  <div class="form-section">
-    <h3>Add Task / Class</h3>
-    <label>Category:</label>
-    <select id="category">
+  <div id="overlay"></div>
+  <div id="taskModal">
+    <h2>Add Task</h2>
+    <input type="text" id="taskName" placeholder="Task name">
+    <input type="time" id="taskTime">
+    <input type="text" id="taskLocation" placeholder="Location">
+    <select id="taskType">
       <option value="class">Class</option>
       <option value="assignment">Assignment</option>
       <option value="exam">Exam</option>
       <option value="event">Event</option>
-    </select><br><br>
-
-    <label>Title:</label>
-    <input type="text" id="title"><br><br>
-
-    <label>Location:</label>
-    <input type="text" id="location"><br><br>
-
-    <label>Date:</label>
-    <input type="date" id="date"><br><br>
-
-    <label>Time:</label>
-    <input type="time" id="time"><br><br>
-
-    <button onclick="addTask()">Add</button>
+    </select>
+    <button onclick="saveTask()">Save</button>
+    <button onclick="closeModal()">Cancel</button>
   </div>
 
   <script>
-    // Generate calendar for August 2025
     const calendar = document.getElementById("calendar");
-    const daysInMonth = 31;
-    for (let i = 1; i <= daysInMonth; i++) {
+    const modal = document.getElementById("taskModal");
+    const overlay = document.getElementById("overlay");
+    let selectedDate = null;
+
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    days.forEach(d => {
+      const div = document.createElement("div");
+      div.innerText = d;
+      div.classList.add("header");
+      calendar.appendChild(div);
+    });
+
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const totalDays = new Date(year, month + 1, 0).getDate();
+
+    for (let i = 0; i < firstDay; i++) {
+      const empty = document.createElement("div");
+      calendar.appendChild(empty);
+    }
+
+    for (let d = 1; d <= totalDays; d++) {
       const dayDiv = document.createElement("div");
-      dayDiv.className = "day";
-      dayDiv.id = "day-" + i;
-      dayDiv.innerHTML = `<div class="date">${i}</div>`;
+      dayDiv.classList.add("day");
+      dayDiv.innerText = d;
+      dayDiv.onclick = () => openModal(d);
       calendar.appendChild(dayDiv);
     }
 
-    function addTask() {
-      const category = document.getElementById("category").value;
-      const title = document.getElementById("title").value;
-      const location = document.getElementById("location").value;
-      const date = new Date(document.getElementById("date").value);
-      const time = document.getElementById("time").value;
+    function openModal(day) {
+      selectedDate = day;
+      modal.style.display = "block";
+      overlay.style.display = "block";
+    }
 
-      if (!title || !date || isNaN(date.getTime())) {
-        alert("Please fill in title and valid date.");
-        return;
-      }
+    function closeModal() {
+      modal.style.display = "none";
+      overlay.style.display = "none";
+    }
 
-      const day = date.getDate();
+    function saveTask() {
+      const name = document.getElementById("taskName").value;
+      const time = document.getElementById("taskTime").value;
+      const location = document.getElementById("taskLocation").value;
+      const type = document.getElementById("taskType").value;
+
+      if (!name || !time) return alert("Please enter task name and time!");
+
       const taskDiv = document.createElement("div");
-      taskDiv.className = "task " + category;
-      taskDiv.textContent = `${title} @ ${time || "N/A"} (${location || "No Location"})`;
+      taskDiv.classList.add("task", type);
+      taskDiv.innerText = `${time} - ${name} @ ${location}`;
 
-      document.getElementById("day-" + day).appendChild(taskDiv);
+      const days = document.querySelectorAll(".day");
+      days.forEach(d => {
+        if (d.innerText == selectedDate) {
+          d.appendChild(taskDiv);
+        }
+      });
+
+      closeModal();
+      document.getElementById("taskName").value = "";
+      document.getElementById("taskTime").value = "";
+      document.getElementById("taskLocation").value = "";
     }
   </script>
-
 </body>
 </html>
