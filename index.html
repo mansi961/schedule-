@@ -1,237 +1,242 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>College Calendar Schedule</title>
+  <meta charset="UTF-8">
+  <title>📚 College Calendar Planner</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #fdfdfd; }
-    h1 { text-align: center; }
-    #monthYear { text-align: center; font-weight: bold; margin-bottom: 10px; }
-    .calendar-nav { text-align: center; margin-bottom: 10px; }
-    .calendar-nav button { margin: 0 5px; padding: 5px 10px; }
-    .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-    .day-header { text-align: center; font-weight: bold; background: #eee; padding: 5px; }
-    .day { border: 1px solid #ccc; min-height: 100px; padding: 5px; background: #fafafa; position: relative; }
-    .day h3 { margin: 0; font-size: 14px; text-align: right; }
-    .event { margin-top: 3px; padding: 3px; border-radius: 3px; font-size: 12px; color: #fff; cursor: pointer; }
-    .Class { background: #007bff; }
-    .Assignment { background: #28a745; }
-    .Exam { background: #dc3545; }
-    .Job { background: #fd7e14; }
-    .Event { background: #6f42c1; }
-    .Festival { background: #ffc107; color: #000; }
-    #addForm, #addClassForm { margin: 20px 0; }
-    input, select, button { margin: 5px; padding: 6px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f9f9f9;
+    }
+    header {
+      text-align: center;
+      background: #4CAF50;
+      color: white;
+      padding: 15px;
+      font-size: 22px;
+    }
+    .calendar {
+      max-width: 900px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .calendar-header button {
+      padding: 6px 12px;
+      border: none;
+      background: #4CAF50;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      margin-top: 15px;
+    }
+    .day {
+      border: 1px solid #ddd;
+      min-height: 90px;
+      padding: 5px;
+      position: relative;
+    }
+    .day-number {
+      font-weight: bold;
+    }
+    .event {
+      background: #ffeb3b;
+      padding: 2px 4px;
+      margin-top: 3px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    form {
+      background: white;
+      padding: 15px;
+      margin: 20px auto;
+      max-width: 600px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    form h3 { margin-top: 0; }
+    label { display: block; margin-top: 8px; }
+    input, select {
+      width: 100%;
+      padding: 6px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button[type="submit"] {
+      margin-top: 12px;
+      padding: 8px 16px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-<h1>📚 College Calendar Schedule</h1>
-<div id="monthYear"></div>
-<div class="calendar-nav">
-  <button id="prevMonth">⟨ Prev</button>
-  <button id="nextMonth">Next ⟩</button>
+
+<header>📚 College Calendar Schedule</header>
+
+<div class="calendar">
+  <div class="calendar-header">
+    <button onclick="changeMonth(-1)">⟨ Prev</button>
+    <h2 id="monthYear"></h2>
+    <button onclick="changeMonth(1)">Next ⟩</button>
+  </div>
+  <div class="calendar-grid" id="calendarGrid"></div>
 </div>
 
-<!-- Weekday Headers -->
-<div class="calendar" id="calendarHeaders">
-  <div class="day-header">Sun</div>
-  <div class="day-header">Mon</div>
-  <div class="day-header">Tue</div>
-  <div class="day-header">Wed</div>
-  <div class="day-header">Thu</div>
-  <div class="day-header">Fri</div>
-  <div class="day-header">Sat</div>
-</div>
-
-<!-- Calendar Grid -->
-<div class="calendar" id="calendar"></div>
-
-<!-- Form to Add Tasks -->
-<form id="addForm">
-  <h2>Add Task</h2>
-  <input type="text" id="title" placeholder="Task/Class Name" required>
-  <select id="type">
-    <option value="Class">Class</option>
-    <option value="Assignment">Assignment</option>
-    <option value="Exam">Exam</option>
-    <option value="Job">Job</option>
-    <option value="Event">Event</option>
-    <option value="Festival">Festival</option>
-  </select><br>
-  <label>Start Date:</label>
-  <input type="date" id="startDate" required>
-  <label>Start Time:</label>
-  <input type="time" id="startTime" required><br>
-  <label>End Date:</label>
-  <input type="date" id="endDate" required>
-  <label>End Time:</label>
-  <input type="time" id="endTime" required><br>
-  <label>Reminder:</label>
-  <input type="datetime-local" id="reminder" required>
+<form id="taskForm">
+  <h3>Add Task</h3>
+  <label>Task/Class Name <input type="text" id="taskName" required></label>
+  <label>Start Date <input type="date" id="taskStart" required></label>
+  <label>Start Time <input type="time" id="taskStartTime"></label>
+  <label>End Date <input type="date" id="taskEnd"></label>
+  <label>End Time <input type="time" id="taskEndTime"></label>
+  <label>Reminder <input type="datetime-local" id="taskReminder"></label>
   <button type="submit">Add Task</button>
 </form>
 
-<!-- Form to Add Classes -->
-<form id="addClassForm">
-  <h2>Add Class</h2>
-  <input type="text" id="classTitle" placeholder="Class Name" required>
-  <input type="text" id="classLocation" placeholder="Location"><br>
-  <label>Start Date:</label>
-  <input type="date" id="classStartDate" required>
-  <label>Start Time:</label>
-  <input type="time" id="classStartTime" required><br>
-  <label>End Date:</label>
-  <input type="date" id="classEndDate" required>
-  <label>End Time:</label>
-  <input type="time" id="classEndTime" required><br>
-  <label>Recurring Days:</label>
-  <select id="classDays" multiple>
-    <option value="0">Sunday</option>
-    <option value="1">Monday</option>
-    <option value="2">Tuesday</option>
-    <option value="3">Wednesday</option>
-    <option value="4">Thursday</option>
-    <option value="5">Friday</option>
-    <option value="6">Saturday</option>
-  </select><br>
-  <label>Reminder:</label>
-  <input type="datetime-local" id="classReminder" required>
+<form id="classForm">
+  <h3>Add Class</h3>
+  <label>Class Name <input type="text" id="className" required></label>
+  <label>Location <input type="text" id="classLocation"></label>
+  <label>Start Date <input type="date" id="classStart" required></label>
+  <label>Start Time <input type="time" id="classStartTime"></label>
+  <label>End Date <input type="date" id="classEnd"></label>
+  <label>End Time <input type="time" id="classEndTime"></label>
+  <label>Recurring Days: 
+    <br>
+    <input type="checkbox" value="0"> Sunday
+    <input type="checkbox" value="1"> Monday
+    <input type="checkbox" value="2"> Tuesday
+    <input type="checkbox" value="3"> Wednesday
+    <input type="checkbox" value="4"> Thursday
+    <input type="checkbox" value="5"> Friday
+    <input type="checkbox" value="6"> Saturday
+  </label>
+  <label>Reminder <input type="datetime-local" id="classReminder"></label>
   <button type="submit">Add Class</button>
 </form>
 
 <script>
-let calendar = document.getElementById("calendar");
-let monthYear = document.getElementById("monthYear");
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let currentDate = new Date();
-
-// Request Notification
-if (Notification.permission !== "granted") Notification.requestPermission();
+let events = [];
+let currentDate = new Date(2025, 7); // August 2025 (month index 7)
 
 function buildCalendar(date) {
-  calendar.innerHTML = "";
-  let year = date.getFullYear();
-  let month = date.getMonth();
-  monthYear.innerText = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const calendarGrid = document.getElementById("calendarGrid");
+  calendarGrid.innerHTML = "";
+  
+  const monthYear = document.getElementById("monthYear");
+  const monthName = date.toLocaleString("default", { month: "long" });
+  monthYear.textContent = `${monthName} ${date.getFullYear()}`;
 
-  let firstDay = new Date(year, month, 1).getDay();
-  let daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1);
+  const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
-  for (let i = 0; i < firstDay; i++) {
-    let empty = document.createElement("div");
-    empty.className = "day";
-    calendar.appendChild(empty);
+  const startDay = firstDay.getDay();
+  const totalDays = lastDay.getDate();
+
+  // Day headers
+  const daysOfWeek = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  daysOfWeek.forEach(day => {
+    const div = document.createElement("div");
+    div.style.fontWeight = "bold";
+    div.style.textAlign = "center";
+    div.textContent = day;
+    calendarGrid.appendChild(div);
+  });
+
+  // Blank slots
+  for (let i = 0; i < startDay; i++) {
+    const div = document.createElement("div");
+    calendarGrid.appendChild(div);
   }
 
-  for (let d = 1; d <= daysInMonth; d++) {
-    let dayBox = document.createElement("div");
-    dayBox.className = "day";
-    dayBox.setAttribute("data-date", `${year}-${month+1}-${d}`);
-    dayBox.innerHTML = `<h3>${d}</h3>`;
-    calendar.appendChild(dayBox);
+  // Calendar days
+  for (let i = 1; i <= totalDays; i++) {
+    const div = document.createElement("div");
+    div.className = "day";
+    const num = document.createElement("div");
+    num.className = "day-number";
+    num.textContent = i;
+    div.appendChild(num);
+
+    let todayEvents = events.filter(ev => {
+      let evDate = new Date(ev.start);
+      return evDate.getFullYear() === date.getFullYear() &&
+             evDate.getMonth() === date.getMonth() &&
+             evDate.getDate() === i;
+    });
+
+    todayEvents.forEach(ev => {
+      const e = document.createElement("div");
+      e.className = "event";
+      e.textContent = ev.name;
+      e.title = ev.details;
+      div.appendChild(e);
+    });
+
+    calendarGrid.appendChild(div);
   }
-
-  renderTasks();
 }
 
-function renderTasks() {
-  tasks.forEach(task => {
-    let start = new Date(task.start);
-    let end = new Date(task.end);
-    let current = new Date(start);
-
-    while (current <= end) {
-      if (task.type === "Class" && task.days && task.days.length > 0) {
-        if (!task.days.includes(current.getDay())) {
-          current.setDate(current.getDate() + 1);
-          continue;
-        }
-      }
-      let dateAttr = `${current.getFullYear()}-${current.getMonth()+1}-${current.getDate()}`;
-      let dayBox = document.querySelector(`.day[data-date='${dateAttr}']`);
-      if (dayBox) {
-        let div = document.createElement("div");
-        div.className = `event ${task.type}`;
-        let locationText = task.location ? ` @ ${task.location}` : '';
-        div.innerText = `${task.type}: ${task.title}${locationText}\n🕒 ${task.startTime} - ${task.endTime}`;
-
-        // Make it clickable
-        div.addEventListener("click", () => {
-          alert(
-            `Type: ${task.type}\nTitle: ${task.title}\nLocation: ${task.location || 'N/A'}\nStart: ${task.start} ${task.startTime}\nEnd: ${task.end} ${task.endTime}\nReminder: ${task.reminder}`
-          );
-        });
-
-        dayBox.appendChild(div);
-      }
-      current.setDate(current.getDate() + 1);
-    }
-  });
+function changeMonth(step) {
+  currentDate.setMonth(currentDate.getMonth() + step);
+  buildCalendar(currentDate);
 }
 
-// Add Task
-document.getElementById("addForm").addEventListener("submit", function(e) {
+// Task Form
+document.getElementById("taskForm").addEventListener("submit", e => {
   e.preventDefault();
-  let task = {
-    title: document.getElementById("title").value,
-    type: document.getElementById("type").value,
-    start: document.getElementById("startDate").value,
-    startTime: document.getElementById("startTime").value,
-    end: document.getElementById("endDate").value,
-    endTime: document.getElementById("endTime").value,
-    reminder: document.getElementById("reminder").value,
-    notified: false
-  };
-  tasks.push(task);
-  localStorage.setItem("tasks", JSON.stringify(tasks));
+  const name = document.getElementById("taskName").value;
+  const start = document.getElementById("taskStart").value + "T" + (document.getElementById("taskStartTime").value || "00:00");
+  const reminder = document.getElementById("taskReminder").value;
+  
+  events.push({name, start, details: "Task", reminder});
+  if(reminder) scheduleReminder(name, reminder);
   buildCalendar(currentDate);
-  this.reset();
+  e.target.reset();
 });
 
-// Add Class
-document.getElementById("addClassForm").addEventListener("submit", function(e) {
+// Class Form
+document.getElementById("classForm").addEventListener("submit", e => {
   e.preventDefault();
-  let classTask = {
-    title: document.getElementById("classTitle").value,
-    location: document.getElementById("classLocation").value,
-    type: "Class",
-    start: document.getElementById("classStartDate").value,
-    startTime: document.getElementById("classStartTime").value,
-    end: document.getElementById("classEndDate").value,
-    endTime: document.getElementById("classEndTime").value,
-    days: Array.from(document.getElementById("classDays").selectedOptions).map(opt => parseInt(opt.value)),
-    reminder: document.getElementById("classReminder").value,
-    notified: false
-  };
-  tasks.push(classTask);
-  localStorage.setItem("tasks", JSON.stringify(tasks));
+  const name = document.getElementById("className").value;
+  const start = document.getElementById("classStart").value + "T" + (document.getElementById("classStartTime").value || "00:00");
+  const reminder = document.getElementById("classReminder").value;
+
+  events.push({name, start, details: "Class", reminder});
+  if(reminder) scheduleReminder(name, reminder);
   buildCalendar(currentDate);
-  this.reset();
+  e.target.reset();
 });
 
-// Reminder check
-setInterval(() => {
-  let now = new Date().getTime();
-  tasks.forEach(task => {
-    let reminderTime = new Date(task.reminder).getTime();
-    if (!task.notified && reminderTime <= now) {
-      new Notification("⏰ Reminder", { body: `${task.type}: ${task.title} at ${task.startTime}` });
-      task.notified = true;
-      localStorage.setItem("tasks", JSON.stringify(tasks));
-    }
-  });
-}, 30000);
+// Notifications
+function scheduleReminder(title, time) {
+  let diff = new Date(time) - new Date();
+  if(diff > 0) {
+    setTimeout(() => {
+      alert("Reminder: " + title);
+    }, diff);
+  }
+}
 
-// Month navigation
-document.getElementById("prevMonth").addEventListener("click", () => {
-  currentDate.setMonth(currentDate.getMonth() - 1);
-  buildCalendar(currentDate);
-});
-document.getElementById("nextMonth").addEventListener("click", () => {
-  currentDate.setMonth(currentDate.getMonth() + 1);
-  buildCalendar(currentDate);
-});
-
-// Initialize
 buildCalendar(currentDate);
 </script>
 </body>
