@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>📅 Weekly College Planner with Recurrence</title>
+<title>📅 Weekly College Planner with Recurrence & Delete</title>
 <style>
   body { font-family: Arial, sans-serif; margin: 20px; }
   h1 { text-align: center; }
@@ -51,6 +51,10 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    cursor: pointer;
+  }
+  .task:hover {
+    opacity: 0.8;
   }
   .class { background: #4CAF50; }
   .assignment { background: #FF9800; }
@@ -309,6 +313,7 @@ function saveTask() {
   }
 
   const task = {
+    id: Date.now(),  // Unique ID for deletion
     date: selectedDay,
     name,
     startTime,
@@ -370,14 +375,26 @@ function renderTasks() {
           if (rowHour >= taskStartHour && rowHour <= taskEndHour) {
             const div = document.createElement("div");
             div.classList.add("task", task.type);
-            div.title = `${task.name} @${task.location}`;
+            div.title = `${task.name} @${task.location}\nClick to delete`;
             div.innerText = `${task.startTime}-${task.endTime} ${task.name} @${task.location}`;
+            div.onclick = (e) => {
+              e.stopPropagation();
+              if (confirm(`Delete task: "${task.name}"?`)) {
+                deleteTask(task.id);
+              }
+            };
             taskArea.appendChild(div);
           }
         }
       });
     });
   });
+}
+
+function deleteTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+  buildWeek(currentDate);
 }
 
 function prevWeek() {
