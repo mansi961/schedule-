@@ -3,164 +3,226 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>📅 Weekly College Planner with Recurrence & Delete</title>
+<title>Weekly Calendar Planner with Recurrence & Delete</title>
 <style>
-  body { font-family: Arial, sans-serif; margin: 20px; }
-  h1 { text-align: center; }
-  #weekNav { text-align: center; margin-bottom: 10px; }
-  #weekNav button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
-  #weekContainer {
+  /* Reset and basic */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background: #f0f2f5;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  #calendar {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 2px;
+    grid-template-columns: 50px repeat(7, 1fr);
+    border: 1px solid #ccc;
     max-width: 1200px;
     margin: 0 auto;
+    background: white;
+    user-select: none;
     position: relative;
   }
-  .dayColumn { border: 1px solid #ccc; background: #f9f9f9; position: relative; }
+  /* Time labels column */
+  #timeLabels {
+    grid-column: 1 / 2;
+    border-right: 1px solid #ccc;
+    background: #fafafa;
+  }
+  .timeLabel {
+    height: 60px;
+    font-size: 12px;
+    text-align: right;
+    padding-right: 5px;
+    line-height: 60px;
+    color: #666;
+    border-bottom: 1px solid #eee;
+  }
+  /* Day columns */
+  .dayColumn {
+    position: relative;
+    border-left: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    background: #fff;
+    overflow: visible;
+  }
+  /* Day headers */
   .dayHeader {
-    background: #eee;
-    font-weight: bold;
-    padding: 5px;
+    height: 30px;
+    line-height: 30px;
     text-align: center;
+    background: #1976d2;
+    color: white;
+    font-weight: bold;
+    border-bottom: 1px solid #ccc;
     user-select: none;
   }
-  .hourRow {
-    border-top: 1px solid #ddd;
-    min-height: 40px;
-    position: relative;
-    cursor: pointer;
-    padding: 0 3px;
-  }
-  .hourLabel {
-    font-size: 10px;
+  /* Hour lines */
+  .hourLine {
     position: absolute;
-    left: 3px;
-    top: 2px;
-    user-select: none;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #eee;
   }
-  .tasks {
-    margin-left: 35px;
-    position: relative;
-    z-index: 2; /* Ensure tasks are above time indicator */
-  }
+  /* Task blocks */
   .task {
-    position: relative;
-    padding: 2px 5px;
-    margin: 1px 0;
-    border-radius: 4px;
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    border-radius: 5px;
+    padding: 3px 5px;
     font-size: 12px;
     color: white;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     cursor: pointer;
-    z-index: 3;
+    overflow: hidden;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    transition: border-color 0.3s;
   }
   .task:hover {
-    opacity: 0.8;
+    border-color: #00000050;
   }
-  .class { background: #4CAF50; }
-  .assignment { background: #FF9800; }
-  .exam { background: #F44336; }
-  .event { background: #2196F3; }
-  .currentHour {
-    background: #ffeb3b !important;
-    color: black;
+  .class {
+    background: #4caf50;
   }
-  /* Current Time Line */
-  .currentTimeLine {
+  .assignment {
+    background: #ff9800;
+  }
+  .exam {
+    background: #f44336;
+  }
+  .event {
+    background: #2196f3;
+  }
+  /* Current time line */
+  #currentTimeLine {
     position: absolute;
+    left: 50px; /* after time labels */
+    right: 0;
     height: 2px;
-    background-color: blue;
-    left: 35px; /* align past hour labels */
-    right: 5px;
-    z-index: 1;
+    background: #2196f3;
+    z-index: 10;
   }
-
-  #taskModal {
+  #currentTimeDot {
+    position: absolute;
+    top: -4px;
+    left: 47px;
+    width: 10px;
+    height: 10px;
+    background: #2196f3;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 5px #2196f3;
+  }
+  /* Modal */
+  #overlay {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.5);
     display: none;
+    z-index: 1000;
+  }
+  #taskModal {
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    background: white;
-    border: 1px solid #ccc;
-    padding: 20px;
-    z-index: 1000;
     width: 320px;
+    background: white;
     border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-  }
-  #overlay {
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+    transform: translate(-50%, -50%);
+    z-index: 1100;
     display: none;
-    position: fixed;
-    top:0; left:0;
-    width:100%; height:100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 500;
   }
-  #taskModal input,
-  #taskModal select {
+  #taskModal h2 {
+    margin-top: 0;
+  }
+  #taskModal label {
     display: block;
-    margin: 10px 0;
-    padding: 6px;
+    margin-top: 10px;
+    font-weight: 600;
+  }
+  #taskModal input[type=text],
+  #taskModal input[type=time],
+  #taskModal select {
     width: 100%;
-    box-sizing: border-box;
+    padding: 6px;
+    margin-top: 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  #weekdaySelector {
+    margin-top: 8px;
   }
   #weekdaySelector label {
     margin-right: 8px;
     user-select: none;
+    cursor: pointer;
+  }
+  #weekdaySelector input {
+    margin-right: 3px;
+  }
+  button {
+    cursor: pointer;
+    padding: 10px;
+    margin-top: 15px;
+    width: 100%;
+    border: none;
+    border-radius: 5px;
+    font-weight: bold;
   }
   button.saveBtn {
-    margin-top: 10px;
     background: #1976d2;
     color: white;
-    border: none;
-    padding: 8px 14px;
-    border-radius: 5px;
-    cursor: pointer;
-    width: 100%;
   }
   button.cancelBtn {
-    margin-top: 8px;
-    background: #888;
+    background: #999;
     color: white;
-    border: none;
-    padding: 8px 14px;
-    border-radius: 5px;
-    cursor: pointer;
-    width: 100%;
+    margin-top: 8px;
   }
 </style>
 </head>
 <body>
 
-<h1>📅 Weekly College Planner</h1>
-<div id="weekNav">
-  <button onclick="prevWeek()">⟨ Prev Week</button>
-  <span id="weekRange"></span>
-  <button onclick="nextWeek()">Next Week ⟩</button>
+<h1>📅 Weekly Calendar Planner</h1>
+
+<div id="calendar">
+  <!-- Time labels column -->
+  <div id="timeLabels">
+    <!-- Generated by JS -->
+  </div>
+  <!-- 7 days columns -->
 </div>
 
-<div id="weekContainer"></div>
+<div id="currentTimeLine">
+  <div id="currentTimeDot"></div>
+</div>
 
-<div id="overlay" onclick="closeModal()"></div>
-
+<div id="overlay"></div>
 <div id="taskModal">
-  <h2>Add Task</h2>
+  <h2 id="modalTitle">Add Task</h2>
   <label>Task Name:</label>
   <input type="text" id="taskName" placeholder="Task name" />
-  
+
+  <label>Date:</label>
+  <input type="date" id="taskDate" />
+
   <label>Start Time:</label>
   <input type="time" id="startTime" />
-  
+
   <label>End Time:</label>
   <input type="time" id="endTime" />
-  
+
   <label>Location:</label>
   <input type="text" id="taskLocation" placeholder="Location" />
-  
+
   <label>Type:</label>
   <select id="taskType">
     <option value="class">Class</option>
@@ -168,17 +230,17 @@
     <option value="exam">Exam</option>
     <option value="event">Event</option>
   </select>
-  
+
   <label>Recurrence:</label>
   <select id="recurrence" onchange="toggleWeekdays()">
     <option value="none">None</option>
     <option value="daily">Daily</option>
     <option value="weekly">Weekly</option>
     <option value="custom">Custom Days</option>
-    <option value="8days">Every 8 Days</option> <!-- New recurrence option -->
+    <option value="eightdays">Every 8 Days</option>
   </select>
-  
-  <div id="weekdaySelector" style="display:none; margin-top: 5px;">
+
+  <div id="weekdaySelector" style="display:none;">
     <label><input type="checkbox" value="0" /> Sun</label>
     <label><input type="checkbox" value="1" /> Mon</label>
     <label><input type="checkbox" value="2" /> Tue</label>
@@ -187,302 +249,389 @@
     <label><input type="checkbox" value="5" /> Fri</label>
     <label><input type="checkbox" value="6" /> Sat</label>
   </div>
-  
-  <!-- Save button moved after recurrence selectors -->
+
   <button class="saveBtn" onclick="saveTask()">Save</button>
   <button class="cancelBtn" onclick="closeModal()">Cancel</button>
 </div>
 
 <script>
-let weekContainer = document.getElementById("weekContainer");
-let taskModal = document.getElementById("taskModal");
-let overlay = document.getElementById("overlay");
-let weekRangeEl = document.getElementById("weekRange");
+  const calendar = document.getElementById('calendar');
+  const timeLabels = document.getElementById('timeLabels');
+  const currentTimeLine = document.getElementById('currentTimeLine');
+  const currentTimeDot = document.getElementById('currentTimeDot');
+  const overlay = document.getElementById('overlay');
+  const taskModal = document.getElementById('taskModal');
+  const modalTitle = document.getElementById('modalTitle');
 
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-let currentDate = new Date();
-let selectedDay = null;
+  let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+  let editingTaskId = null;
 
-function getWeekStart(date) {
-  let d = new Date(date);
-  let day = d.getDay();
-  d.setHours(0,0,0,0);
-  d.setDate(d.getDate() - day); // Sunday start
-  return d;
-}
+  // Current week start (Sunday)
+  let currentDate = new Date();
+  currentDate.setHours(0,0,0,0);
+  const weekStart = getWeekStart(currentDate);
 
-function formatDate(date) {
-  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-}
-
-// Build the week view grid
-function buildWeek(date) {
-  weekContainer.innerHTML = "";
-  const startOfWeek = getWeekStart(date);
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(endOfWeek.getDate() + 6);
-  weekRangeEl.innerText = `${startOfWeek.toDateString()} - ${endOfWeek.toDateString()}`;
-
-  for(let d=0; d<7; d++) {
-    const dayDate = new Date(startOfWeek);
-    dayDate.setDate(dayDate.getDate() + d);
-    const dayCol = document.createElement("div");
-    dayCol.classList.add("dayColumn");
-    dayCol.style.position = "relative";
-
-    const header = document.createElement("div");
-    header.classList.add("dayHeader");
-    header.innerText = dayDate.toDateString();
-    header.setAttribute("data-date", formatDate(dayDate));
-    dayCol.appendChild(header);
-
-    for(let hour=0; hour<24; hour++) {
-      const hourRow = document.createElement("div");
-      hourRow.classList.add("hourRow");
-      hourRow.onclick = () => openModal(dayDate);
-
-      const label = document.createElement("div");
-      label.classList.add("hourLabel");
-      label.innerText = `${String(hour).padStart(2,'0')}:00`;
-      hourRow.appendChild(label);
-
-      const taskArea = document.createElement("div");
-      taskArea.classList.add("tasks");
-      hourRow.appendChild(taskArea);
-
-      dayCol.appendChild(hourRow);
-    }
-
-    // Add a container div to position the current time line inside dayColumn
-    const timeLine = document.createElement("div");
-    timeLine.classList.add("currentTimeLine");
-    timeLine.style.display = "none"; // Hidden initially
-    dayCol.appendChild(timeLine);
-
-    weekContainer.appendChild(dayCol);
+  // Utility: get Sunday of week
+  function getWeekStart(date) {
+    const d = new Date(date);
+    d.setHours(0,0,0,0);
+    const day = d.getDay();
+    d.setDate(d.getDate() - day);
+    return d;
   }
 
-  highlightCurrentHour();
-  renderTasks();
-  updateCurrentTimeLine(); // Call after building grid
-}
+  // Format date as yyyy-mm-dd
+  function formatDate(date) {
+    return date.toISOString().slice(0,10);
+  }
 
-// Highlight current day and hour
-function highlightCurrentHour() {
-  const now = new Date();
-  const currentDayStr = now.toDateString();
-  const currentHour = now.getHours();
+  // Generate time labels (0:00 to 23:00 every hour)
+  function generateTimeLabels() {
+    timeLabels.innerHTML = '';
+    for(let hour = 0; hour < 24; hour++) {
+      const label = document.createElement('div');
+      label.className = 'timeLabel';
+      label.innerText = `${hour.toString().padStart(2,'0')}:00`;
+      timeLabels.appendChild(label);
+    }
+  }
 
-  const dayColumns = document.querySelectorAll(".dayColumn");
-  dayColumns.forEach(col => {
-    const dayStr = col.querySelector(".dayHeader").innerText;
-    const rows = col.querySelectorAll(".hourRow");
-    rows.forEach(row => row.classList.remove("currentHour"));
-    if(dayStr === currentDayStr) {
-      rows.forEach(row => {
-        const rowHour = parseInt(row.querySelector(".hourLabel").innerText.split(":")[0]);
-        if(rowHour === currentHour) {
-          row.classList.add("currentHour");
+  // Generate day columns with day headers and hour lines
+  function generateDayColumns() {
+    // Remove old day columns if any
+    const oldDays = calendar.querySelectorAll('.dayColumn');
+    oldDays.forEach(d => d.remove());
+
+    for(let i = 0; i < 7; i++) {
+      const dayDate = new Date(weekStart);
+      dayDate.setDate(dayDate.getDate() + i);
+
+      const dayCol = document.createElement('div');
+      dayCol.className = 'dayColumn';
+      dayCol.dataset.date = formatDate(dayDate);
+
+      // Day header
+      const header = document.createElement('div');
+      header.className = 'dayHeader';
+      header.innerText = `${dayDate.toDateString().slice(0, 10)}`; // E.g. "Sun Aug 24"
+      dayCol.appendChild(header);
+
+      // Hour lines (every hour)
+      for(let h = 0; h < 24; h++) {
+        const line = document.createElement('div');
+        line.className = 'hourLine';
+        line.style.top = `${h * 60}px`;
+        dayCol.appendChild(line);
+      }
+
+      // Clicking empty space on day to add task
+      dayCol.addEventListener('click', e => {
+        // Only add task if clicked on dayCol itself, not on task div
+        if (e.target === dayCol || e.target.classList.contains('hourLine') || e.target.classList.contains('dayHeader')) {
+          // Calculate clicked time based on Y offset
+          const rect = dayCol.getBoundingClientRect();
+          const y = e.clientY - rect.top - 30; // subtract header height 30px
+          if (y < 0) return; // clicked header area or invalid
+
+          const minutes = Math.floor(y);
+          const hour = Math.floor(minutes / 60);
+          const minute = Math.floor(minutes % 60);
+
+          openModal({
+            date: dayCol.dataset.date,
+            startTime: `${hour.toString().padStart(2,'0')}:${minute.toString().padStart(2,'0')}`,
+            endTime: `${hour.toString().padStart(2,'0')}:${(minute+30).toString().padStart(2,'0')}`
+          });
         }
       });
-    }
-  });
 
-  // Update every minute
-  setTimeout(highlightCurrentHour, 60000);
-}
-
-function openModal(day) {
-  selectedDay = formatDate(day);
-  taskModal.style.display = "block";
-  overlay.style.display = "block";
-
-  // Reset form
-  clearForm();
-}
-
-function closeModal() {
-  taskModal.style.display = "none";
-  overlay.style.display = "none";
-}
-
-function toggleWeekdays() {
-  const recurrence = document.getElementById("recurrence").value;
-  document.getElementById("weekdaySelector").style.display = (recurrence === "custom") ? "block" : "none";
-}
-
-function saveTask() {
-  const name = document.getElementById("taskName").value.trim();
-  const startTime = document.getElementById("startTime").value;
-  const endTime = document.getElementById("endTime").value;
-  const location = document.getElementById("taskLocation").value.trim();
-  const type = document.getElementById("taskType").value;
-  const recurrence = document.getElementById("recurrence").value;
-
-  if (!name || !startTime || !endTime) {
-    return alert("Please enter name, start and end time!");
-  }
-  if (startTime >= endTime) {
-    return alert("End time must be after start time.");
-  }
-
-  let weekdays = [];
-  if (recurrence === "custom") {
-    document.querySelectorAll("#weekdaySelector input:checked").forEach(cb => {
-      weekdays.push(parseInt(cb.value));
-    });
-    if (weekdays.length === 0) {
-      return alert("Please select at least one weekday for custom recurrence.");
+      calendar.appendChild(dayCol);
     }
   }
 
-  const task = {
-    id: Date.now(),  // Unique ID for deletion
-    date: selectedDay,
-    name,
-    startTime,
-    endTime,
-    location,
-    type,
-    recurrence,
-    weekdays
-  };
+  // Render tasks inside day columns
+  function renderTasks() {
+    // Remove existing tasks first
+    document.querySelectorAll('.task').forEach(t => t.remove());
 
-  tasks.push(task);
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-
-  closeModal();
-  buildWeek(currentDate);
-}
-
-function clearForm() {
-  document.getElementById("taskName").value = "";
-  document.getElementById("startTime").value = "";
-  document.getElementById("endTime").value = "";
-  document.getElementById("taskLocation").value = "";
-  document.getElementById("taskType").value = "class";
-  document.getElementById("recurrence").value = "none";
-  toggleWeekdays();
-  document.querySelectorAll("#weekdaySelector input").forEach(cb => cb.checked = false);
-}
-
-function renderTasks() {
-  const dayColumns = document.querySelectorAll(".dayColumn");
-  dayColumns.forEach(col => {
-    const dateStr = col.querySelector(".dayHeader").getAttribute("data-date");
-    const date = new Date(dateStr);
-    const dayOfWeek = date.getDay();
-
-    const rows = col.querySelectorAll(".hourRow");
-    rows.forEach(row => {
-      const taskArea = row.querySelector(".tasks");
-      taskArea.innerHTML = "";
+    const dayColumns = document.querySelectorAll('.dayColumn');
+    dayColumns.forEach(dayCol => {
+      const dateStr = dayCol.dataset.date;
+      const dayDate = new Date(dateStr);
+      const dayOfWeek = dayDate.getDay();
 
       tasks.forEach(task => {
-        let shouldShow = false;
+        if (!shouldShowTask(task, dayDate, dayOfWeek)) return;
 
-        if (task.date === dateStr) {
-          shouldShow = true;
-        } else if (task.recurrence === "daily") {
-          shouldShow = true;
-        } else if (task.recurrence === "weekly") {
-          const taskDate = new Date(task.date);
-          if (taskDate.getDay() === dayOfWeek) shouldShow = true;
-        } else if (task.recurrence === "custom" && task.weekdays.includes(dayOfWeek)) {
-          shouldShow = true;
-        } else if (task.recurrence === "8days") {
-          // Every 8 days from the task date, check if current date matches that pattern
-          const taskStartDate = new Date(task.date);
-          const diffTime = date - taskStartDate;
-          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-          if (diffDays >= 0 && diffDays % 8 === 0) {
-            shouldShow = true;
-          }
-        }
+        // Calculate top and height based on start/end time
+        const start = parseTime(task.startTime);
+        const end = parseTime(task.endTime);
+        const durationMinutes = (end.hour*60 + end.minute) - (start.hour*60 + start.minute);
+        if (durationMinutes <= 0) return; // invalid duration
 
-        if (shouldShow) {
-          const rowHour = parseInt(row.querySelector(".hourLabel").innerText.split(":")[0]);
-          const taskStartHour = parseInt(task.startTime.split(":")[0]);
-          const taskEndHour = parseInt(task.endTime.split(":")[0]);
-          if (rowHour >= taskStartHour && rowHour <= taskEndHour) {
-            const div = document.createElement("div");
-            div.classList.add("task", task.type);
-            div.title = `${task.name} @${task.location}\nClick to delete`;
-            div.innerText = `${task.startTime}-${task.endTime} ${task.name} @${task.location}`;
-            div.onclick = (e) => {
-              e.stopPropagation();
-              if (confirm(`Delete task: "${task.name}"?`)) {
-                deleteTask(task.id);
-              }
-            };
-            taskArea.appendChild(div);
-          }
-        }
+        // Position in px (1 minute = 1px)
+        const top = start.hour*60 + start.minute + 30; // +30 for header
+        const height = durationMinutes;
+
+        // Create task div
+        const taskDiv = document.createElement('div');
+        taskDiv.className = `task ${task.type}`;
+        taskDiv.style.top = `${top}px`;
+        taskDiv.style.height = `${height}px`;
+        taskDiv.title = `${task.name} @${task.location}\n${task.startTime} - ${task.endTime}\nClick to edit/delete`;
+        taskDiv.innerText = task.name;
+
+        // Click to edit/delete task
+        taskDiv.addEventListener('click', e => {
+          e.stopPropagation();
+          openModal(task);
+        });
+
+        dayCol.appendChild(taskDiv);
       });
     });
-  });
-}
+  }
 
-function deleteTask(id) {
-  tasks = tasks.filter(t => t.id !== id);
-  localStorage.setItem("tasks", JSON.stringify(tasks));
-  buildWeek(currentDate);
-}
+  // Check if task should show on given date (consider recurrence)
+  function shouldShowTask(task, dateObj, dayOfWeek) {
+    const taskDate = new Date(task.date);
 
-function prevWeek() {
-  currentDate.setDate(currentDate.getDate() - 7);
-  buildWeek(currentDate);
-}
-
-function nextWeek() {
-  currentDate.setDate(currentDate.getDate() + 7);
-  buildWeek(currentDate);
-}
-
-// Function to update the blue current time line on each day column
-function updateCurrentTimeLine() {
-  const now = new Date();
-  const startOfWeek = getWeekStart(currentDate);
-
-  // Loop over each day column and position the current time line if today is in that column
-  const dayColumns = document.querySelectorAll(".dayColumn");
-
-  dayColumns.forEach(col => {
-    const dateStr = col.querySelector(".dayHeader").getAttribute("data-date");
-    const colDate = new Date(dateStr);
-
-    const timeLine = col.querySelector(".currentTimeLine");
-
-    if (colDate.toDateString() === now.toDateString()) {
-      // Show line
-      timeLine.style.display = "block";
-
-      // Calculate position within the column:
-      // Each hourRow min-height: 40px, 24 rows = 960px total height approx
-      // We calculate the number of minutes & seconds into the day, then convert to pixels
-
-      const hourRowHeight = 40; // px per hour row
-      const totalHours = 24;
-
-      // Total minutes in day so far:
-      const minutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds()/60;
-
-      // Total pixels from top of dayColumn excluding header height (~30px)
-      const headerHeight = col.querySelector(".dayHeader").offsetHeight;
-      const offsetY = headerHeight + (minutes / 60) * hourRowHeight;
-
-      timeLine.style.top = `${offsetY}px`;
-    } else {
-      timeLine.style.display = "none";
+    if (task.recurrence === 'none') {
+      return formatDate(dateObj) === formatDate(taskDate);
+    } else if (task.recurrence === 'daily') {
+      return dateObj >= taskDate; // repeats daily from start date forward
+    } else if (task.recurrence === 'weekly') {
+      // repeats weekly on the same weekday from start date forward
+      if (dateObj < taskDate) return false;
+      return dateObj.getDay() === taskDate.getDay();
+    } else if (task.recurrence === 'custom') {
+      if (!task.weekdays || task.weekdays.length === 0) return false;
+      if (dateObj < taskDate) return false;
+      return task.weekdays.includes(dayOfWeek);
+    } else if (task.recurrence === 'eightdays') {
+      // repeats every 8 days starting task.date
+      if (dateObj < taskDate) return false;
+      const diffDays = Math.floor((dateObj - taskDate) / (1000*60*60*24));
+      return diffDays % 8 === 0;
     }
-  });
+    return false;
+  }
 
-  // Update every second to keep seconds accurate
-  setTimeout(updateCurrentTimeLine, 1000);
-}
+  // Parse "HH:MM" to {hour, minute}
+  function parseTime(t) {
+    const [hourStr, minuteStr] = t.split(':');
+    return {hour: parseInt(hourStr), minute: parseInt(minuteStr)};
+  }
 
-// Initial build
-buildWeek(currentDate);
+  // Modal controls
+  function openModal(task = null) {
+    overlay.style.display = 'block';
+    taskModal.style.display = 'block';
+    editingTaskId = null;
+
+    // Reset form
+    document.getElementById('taskName').value = '';
+    document.getElementById('taskDate').value = formatDate(currentDate);
+    document.getElementById('startTime').value = '09:00';
+    document.getElementById('endTime').value = '10:00';
+    document.getElementById('taskLocation').value = '';
+    document.getElementById('taskType').value = 'class';
+    document.getElementById('recurrence').value = 'none';
+    toggleWeekdays();
+    document.querySelectorAll('#weekdaySelector input').forEach(cb => cb.checked = false);
+
+    if (task) {
+      modalTitle.innerText = 'Edit Task';
+      editingTaskId = task.id || null;
+      document.getElementById('taskName').value = task.name;
+      document.getElementById('taskDate').value = task.date;
+      document.getElementById('startTime').value = task.startTime;
+      document.getElementById('endTime').value = task.endTime;
+      document.getElementById('taskLocation').value = task.location;
+      document.getElementById('taskType').value = task.type;
+      document.getElementById('recurrence').value = task.recurrence || 'none';
+      toggleWeekdays();
+      if (task.recurrence === 'custom' && task.weekdays) {
+        document.querySelectorAll('#weekdaySelector input').forEach(cb => {
+          cb.checked = task.weekdays.includes(parseInt(cb.value));
+        });
+      }
+    } else if (task && task.startTime) {
+      document.getElementById('startTime').value = task.startTime;
+      document.getElementById('endTime').value = task.endTime;
+      document.getElementById('taskDate').value = task.date;
+    } else if (task && task.date) {
+      document.getElementById('taskDate').value = task.date;
+    } else if (task && task.startTime) {
+      document.getElementById('startTime').value = task.startTime;
+      document.getElementById('endTime').value = task.endTime;
+    }
+  }
+  function closeModal() {
+    overlay.style.display = 'none';
+    taskModal.style.display = 'none';
+    editingTaskId = null;
+  }
+
+  // Save task (new or edit)
+  function saveTask() {
+    const name = document.getElementById('taskName').value.trim();
+    const date = document.getElementById('taskDate').value;
+    const startTime = document.getElementById('startTime').value;
+    const endTime = document.getElementById('endTime').value;
+    const location = document.getElementById('taskLocation').value.trim();
+    const type = document.getElementById('taskType').value;
+    const recurrence = document.getElementById('recurrence').value;
+
+    // Validate required
+    if (!name || !date || !startTime || !endTime) {
+      alert('Please fill in task name, date, start and end times.');
+      return;
+    }
+    if (startTime >= endTime) {
+      alert('End time must be after start time.');
+      return;
+    }
+
+    let weekdays = [];
+    if (recurrence === 'custom') {
+      weekdays = Array.from(document.querySelectorAll('#weekdaySelector input:checked')).map(cb => parseInt(cb.value));
+      if (weekdays.length === 0) {
+        alert('Please select at least one weekday for custom recurrence.');
+        return;
+      }
+    }
+
+    if (editingTaskId !== null) {
+      // Edit existing task
+      const idx = tasks.findIndex(t => t.id === editingTaskId);
+      if (idx !== -1) {
+        tasks[idx] = {...tasks[idx], name, date, startTime, endTime, location, type, recurrence, weekdays};
+      }
+    } else {
+      // New task with unique id
+      const id = Date.now();
+      tasks.push({id, name, date, startTime, endTime, location, type, recurrence, weekdays});
+    }
+
+    saveTasksToStorage();
+    closeModal();
+    renderTasks();
+  }
+
+  function saveTasksToStorage() {
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+  }
+
+  // Toggle showing weekdays selector based on recurrence type
+  function toggleWeekdays() {
+    const recurrence = document.getElementById('recurrence').value;
+    const weekdaySelector = document.getElementById('weekdaySelector');
+    if (recurrence === 'custom') {
+      weekdaySelector.style.display = 'block';
+    } else {
+      weekdaySelector.style.display = 'none';
+    }
+  }
+
+  // Delete task prompt on long press or edit modal?
+  // Let's add a delete button in modal when editing
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = 'Delete Task';
+  deleteBtn.style.background = '#f44336';
+  deleteBtn.style.color = 'white';
+  deleteBtn.style.marginTop = '8px';
+  deleteBtn.style.display = 'none';
+  deleteBtn.onclick = () => {
+    if (editingTaskId !== null && confirm('Delete this task?')) {
+      tasks = tasks.filter(t => t.id !== editingTaskId);
+      saveTasksToStorage();
+      closeModal();
+      renderTasks();
+    }
+  };
+  taskModal.appendChild(deleteBtn);
+
+  // Show delete button only when editing
+  function showDeleteButton(show) {
+    deleteBtn.style.display = show ? 'block' : 'none';
+  }
+
+  // Update modal open to show delete button only on edit
+  const originalOpenModal = openModal;
+  openModal = function(task = null) {
+    overlay.style.display = 'block';
+    taskModal.style.display = 'block';
+    editingTaskId = null;
+
+    // Reset form
+    document.getElementById('taskName').value = '';
+    document.getElementById('taskDate').value = formatDate(currentDate);
+    document.getElementById('startTime').value = '09:00';
+    document.getElementById('endTime').value = '10:00';
+    document.getElementById('taskLocation').value = '';
+    document.getElementById('taskType').value = 'class';
+    document.getElementById('recurrence').value = 'none';
+    toggleWeekdays();
+    document.querySelectorAll('#weekdaySelector input').forEach(cb => cb.checked = false);
+    showDeleteButton(false);
+
+    if (task) {
+      modalTitle.innerText = 'Edit Task';
+      editingTaskId = task.id || null;
+      document.getElementById('taskName').value = task.name;
+      document.getElementById('taskDate').value = task.date;
+      document.getElementById('startTime').value = task.startTime;
+      document.getElementById('endTime').value = task.endTime;
+      document.getElementById('taskLocation').value = task.location;
+      document.getElementById('taskType').value = task.type;
+      document.getElementById('recurrence').value = task.recurrence || 'none';
+      toggleWeekdays();
+      if (task.recurrence === 'custom' && task.weekdays) {
+        document.querySelectorAll('#weekdaySelector input').forEach(cb => {
+          cb.checked = task.weekdays.includes(parseInt(cb.value));
+        });
+      }
+      showDeleteButton(true);
+    } else if (task && task.startTime) {
+      document.getElementById('startTime').value = task.startTime;
+      document.getElementById('endTime').value = task.endTime;
+      document.getElementById('taskDate').value = task.date;
+    } else if (task && task.date) {
+      document.getElementById('taskDate').value = task.date;
+    } else if (task && task.startTime) {
+      document.getElementById('startTime').value = task.startTime;
+      document.getElementById('endTime').value = task.endTime;
+    }
+  };
+
+  // Current time line update every second
+  function updateCurrentTimeLine() {
+    const now = new Date();
+    const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes() + now.getSeconds()/60;
+    // Position relative to calendar top (header + 24*60 px)
+    const top = 30 + minutesSinceMidnight; // 30px header height
+    currentTimeLine.style.top = `${top}px`;
+    currentTimeDot.style.top = `${top-4}px`;
+
+    // Position horizontally just after timeLabels column (50px)
+    currentTimeLine.style.left = '50px';
+    currentTimeLine.style.right = '0';
+  }
+
+  // Initialize calendar
+  function init() {
+    generateTimeLabels();
+    generateDayColumns();
+    renderTasks();
+    updateCurrentTimeLine();
+    setInterval(updateCurrentTimeLine, 1000);
+  }
+
+  // Close modal on clicking overlay
+  overlay.addEventListener('click', closeModal);
+
+  init();
 </script>
 
 </body>
