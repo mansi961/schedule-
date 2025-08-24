@@ -1,36 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>📅 Weekly College Planner</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1 { text-align: center; }
-    #weekNav { text-align: center; margin-bottom: 10px; }
-    #weekNav button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
-    #weekContainer { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; max-width: 1200px; margin: 0 auto; }
-    .dayColumn { border: 1px solid #ccc; background: #f9f9f9; }
-    .dayHeader { background: #eee; font-weight: bold; padding: 5px; text-align: center; }
-    .hourRow { border-top: 1px solid #ddd; min-height: 40px; position: relative; cursor: pointer; padding: 0 3px; }
-    .hourLabel { font-size: 10px; position: absolute; left: 3px; top: 2px; }
-    .task { position: absolute; left: 0; right: 0; padding: 2px 5px; margin: 1px 0; border-radius: 4px; font-size: 12px; color: white; }
-    .class { background: #4CAF50; }
-    .assignment { background: #FF9800; }
-    .exam { background: #F44336; }
-    .event { background: #2196F3; }
-    .currentHour { background: #ffeb3b !important; color: black; }
-    #taskModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                 background: white; border: 1px solid #ccc; padding: 20px; z-index: 1000; width: 300px; border-radius: 8px; }
-    #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index:500; }
-    #taskModal input, #taskModal select { display: block; margin: 10px 0; padding: 5px; width: 100%; }
-    button.saveBtn { margin-top: 10px; background: #1976d2; color: white; border: none; padding: 8px 14px; border-radius: 5px; cursor: pointer; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>📅 Weekly College Planner with Recurrence</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  h1 { text-align: center; }
+  #weekNav { text-align: center; margin-bottom: 10px; }
+  #weekNav button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
+  #weekContainer {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .dayColumn { border: 1px solid #ccc; background: #f9f9f9; }
+  .dayHeader {
+    background: #eee;
+    font-weight: bold;
+    padding: 5px;
+    text-align: center;
+    user-select: none;
+  }
+  .hourRow {
+    border-top: 1px solid #ddd;
+    min-height: 40px;
+    position: relative;
+    cursor: pointer;
+    padding: 0 3px;
+  }
+  .hourLabel {
+    font-size: 10px;
+    position: absolute;
+    left: 3px;
+    top: 2px;
+    user-select: none;
+  }
+  .tasks {
+    margin-left: 35px;
+  }
+  .task {
+    position: relative;
+    padding: 2px 5px;
+    margin: 1px 0;
+    border-radius: 4px;
+    font-size: 12px;
+    color: white;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .class { background: #4CAF50; }
+  .assignment { background: #FF9800; }
+  .exam { background: #F44336; }
+  .event { background: #2196F3; }
+  .currentHour {
+    background: #ffeb3b !important;
+    color: black;
+  }
+  #taskModal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 1px solid #ccc;
+    padding: 20px;
+    z-index: 1000;
+    width: 320px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  }
+  #overlay {
+    display: none;
+    position: fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 500;
+  }
+  #taskModal input,
+  #taskModal select {
+    display: block;
+    margin: 10px 0;
+    padding: 6px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  #weekdaySelector label {
+    margin-right: 8px;
+    user-select: none;
+  }
+  button.saveBtn {
+    margin-top: 10px;
+    background: #1976d2;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+  }
+  button.cancelBtn {
+    margin-top: 8px;
+    background: #888;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+  }
+</style>
 </head>
 <body>
 
 <h1>📅 Weekly College Planner</h1>
-
 <div id="weekNav">
   <button onclick="prevWeek()">⟨ Prev Week</button>
   <span id="weekRange"></span>
@@ -39,22 +127,22 @@
 
 <div id="weekContainer"></div>
 
-<!-- Modal and overlay -->
-<div id="overlay"></div>
+<div id="overlay" onclick="closeModal()"></div>
+
 <div id="taskModal">
   <h2>Add Task</h2>
   <label>Task Name:</label>
-  <input type="text" id="taskName" placeholder="Task name">
- <label>Start Date:</label>
-  <input type="Date" id="startDate">
-  <label>Start Date:</label>
-  <input type="Date" id="EndDate">
+  <input type="text" id="taskName" placeholder="Task name" />
+  
   <label>Start Time:</label>
-  <input type="time" id="startTime">
+  <input type="time" id="startTime" />
+  
   <label>End Time:</label>
-  <input type="time" id="endTime">
+  <input type="time" id="endTime" />
+  
   <label>Location:</label>
-  <input type="text" id="taskLocation" placeholder="Location">
+  <input type="text" id="taskLocation" placeholder="Location" />
+  
   <label>Type:</label>
   <select id="taskType">
     <option value="class">Class</option>
@@ -62,8 +150,27 @@
     <option value="exam">Exam</option>
     <option value="event">Event</option>
   </select>
+  
+  <label>Recurrence:</label>
+  <select id="recurrence" onchange="toggleWeekdays()">
+    <option value="none">None</option>
+    <option value="daily">Daily</option>
+    <option value="weekly">Weekly</option>
+    <option value="custom">Custom Days</option>
+  </select>
+  
+  <div id="weekdaySelector" style="display:none; margin-top: 5px;">
+    <label><input type="checkbox" value="0" /> Sun</label>
+    <label><input type="checkbox" value="1" /> Mon</label>
+    <label><input type="checkbox" value="2" /> Tue</label>
+    <label><input type="checkbox" value="3" /> Wed</label>
+    <label><input type="checkbox" value="4" /> Thu</label>
+    <label><input type="checkbox" value="5" /> Fri</label>
+    <label><input type="checkbox" value="6" /> Sat</label>
+  </div>
+  
   <button class="saveBtn" onclick="saveTask()">Save</button>
-  <button onclick="closeModal()">Cancel</button>
+  <button class="cancelBtn" onclick="closeModal()">Cancel</button>
 </div>
 
 <script>
@@ -78,9 +185,9 @@ let selectedDay = null;
 
 function getWeekStart(date) {
   let d = new Date(date);
+  let day = d.getDay();
   d.setHours(0,0,0,0);
-  let day = d.getDay(); // 0=Sun
-  d.setDate(d.getDate() - day);
+  d.setDate(d.getDate() - day); // Sunday start
   return d;
 }
 
@@ -88,6 +195,7 @@ function formatDate(date) {
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
 }
 
+// Build the week view grid
 function buildWeek(date) {
   weekContainer.innerHTML = "";
   const startOfWeek = getWeekStart(date);
@@ -95,28 +203,26 @@ function buildWeek(date) {
   endOfWeek.setDate(endOfWeek.getDate() + 6);
   weekRangeEl.innerText = `${startOfWeek.toDateString()} - ${endOfWeek.toDateString()}`;
 
-  for (let d = 0; d < 7; d++) {
+  for(let d=0; d<7; d++) {
     const dayDate = new Date(startOfWeek);
     dayDate.setDate(dayDate.getDate() + d);
-    const formattedDate = formatDate(dayDate);
-
     const dayCol = document.createElement("div");
     dayCol.classList.add("dayColumn");
 
     const header = document.createElement("div");
     header.classList.add("dayHeader");
     header.innerText = dayDate.toDateString();
-    header.setAttribute("data-date", formattedDate);
+    header.setAttribute("data-date", formatDate(dayDate));
     dayCol.appendChild(header);
 
-    for (let hour = 0; hour < 24; hour++) {
+    for(let hour=0; hour<24; hour++) {
       const hourRow = document.createElement("div");
       hourRow.classList.add("hourRow");
       hourRow.onclick = () => openModal(dayDate);
 
       const label = document.createElement("div");
       label.classList.add("hourLabel");
-      label.innerText = `${String(hour).padStart(2, '0')}:00`;
+      label.innerText = `${String(hour).padStart(2,'0')}:00`;
       hourRow.appendChild(label);
 
       const taskArea = document.createElement("div");
@@ -133,57 +239,86 @@ function buildWeek(date) {
   renderTasks();
 }
 
+// Highlight current day and hour
 function highlightCurrentHour() {
   const now = new Date();
   const currentDayStr = now.toDateString();
   const currentHour = now.getHours();
 
-  document.querySelectorAll(".dayColumn").forEach(col => {
+  const dayColumns = document.querySelectorAll(".dayColumn");
+  dayColumns.forEach(col => {
     const dayStr = col.querySelector(".dayHeader").innerText;
     const rows = col.querySelectorAll(".hourRow");
     rows.forEach(row => row.classList.remove("currentHour"));
-
-    if (dayStr === currentDayStr) {
+    if(dayStr === currentDayStr) {
       rows.forEach(row => {
         const rowHour = parseInt(row.querySelector(".hourLabel").innerText.split(":")[0]);
-        if (rowHour === currentHour) {
+        if(rowHour === currentHour) {
           row.classList.add("currentHour");
         }
       });
     }
   });
 
-  setTimeout(highlightCurrentHour, 60000); // Update every minute
+  // Update every minute
+  setTimeout(highlightCurrentHour, 60000);
 }
 
 function openModal(day) {
   selectedDay = formatDate(day);
   taskModal.style.display = "block";
   overlay.style.display = "block";
+
+  // Reset form
+  clearForm();
 }
 
 function closeModal() {
   taskModal.style.display = "none";
   overlay.style.display = "none";
-  clearForm();
+}
+
+function toggleWeekdays() {
+  const recurrence = document.getElementById("recurrence").value;
+  document.getElementById("weekdaySelector").style.display = (recurrence === "custom") ? "block" : "none";
 }
 
 function saveTask() {
-  const name = document.getElementById("taskName").value;
+  const name = document.getElementById("taskName").value.trim();
   const startTime = document.getElementById("startTime").value;
   const endTime = document.getElementById("endTime").value;
-  const location = document.getElementById("taskLocation").value;
+  const location = document.getElementById("taskLocation").value.trim();
   const type = document.getElementById("taskType").value;
+  const recurrence = document.getElementById("recurrence").value;
 
   if (!name || !startTime || !endTime) {
-    return alert("Please enter name, start time, and end time!");
+    return alert("Please enter name, start and end time!");
   }
-
   if (startTime >= endTime) {
     return alert("End time must be after start time.");
   }
 
-  const task = { date: selectedDay, name, startTime, endTime, location, type };
+  let weekdays = [];
+  if (recurrence === "custom") {
+    document.querySelectorAll("#weekdaySelector input:checked").forEach(cb => {
+      weekdays.push(parseInt(cb.value));
+    });
+    if (weekdays.length === 0) {
+      return alert("Please select at least one weekday for custom recurrence.");
+    }
+  }
+
+  const task = {
+    date: selectedDay,
+    name,
+    startTime,
+    endTime,
+    location,
+    type,
+    recurrence,
+    weekdays
+  };
+
   tasks.push(task);
   localStorage.setItem("tasks", JSON.stringify(tasks));
 
@@ -196,26 +331,46 @@ function clearForm() {
   document.getElementById("startTime").value = "";
   document.getElementById("endTime").value = "";
   document.getElementById("taskLocation").value = "";
+  document.getElementById("taskType").value = "class";
+  document.getElementById("recurrence").value = "none";
+  toggleWeekdays();
+  document.querySelectorAll("#weekdaySelector input").forEach(cb => cb.checked = false);
 }
 
 function renderTasks() {
-  document.querySelectorAll(".dayColumn").forEach(col => {
-    const date = col.querySelector(".dayHeader").getAttribute("data-date");
-    const rows = col.querySelectorAll(".hourRow");
+  const dayColumns = document.querySelectorAll(".dayColumn");
+  dayColumns.forEach(col => {
+    const dateStr = col.querySelector(".dayHeader").getAttribute("data-date");
+    const date = new Date(dateStr);
+    const dayOfWeek = date.getDay();
 
+    const rows = col.querySelectorAll(".hourRow");
     rows.forEach(row => {
       const taskArea = row.querySelector(".tasks");
       taskArea.innerHTML = "";
 
       tasks.forEach(task => {
-        if (task.date === date) {
+        let shouldShow = false;
+
+        if (task.date === dateStr) {
+          shouldShow = true;
+        } else if (task.recurrence === "daily") {
+          shouldShow = true;
+        } else if (task.recurrence === "weekly") {
+          const taskDate = new Date(task.date);
+          if (taskDate.getDay() === dayOfWeek) shouldShow = true;
+        } else if (task.recurrence === "custom" && task.weekdays.includes(dayOfWeek)) {
+          shouldShow = true;
+        }
+
+        if (shouldShow) {
+          const rowHour = parseInt(row.querySelector(".hourLabel").innerText.split(":")[0]);
           const taskStartHour = parseInt(task.startTime.split(":")[0]);
           const taskEndHour = parseInt(task.endTime.split(":")[0]);
-          const rowHour = parseInt(row.querySelector(".hourLabel").innerText.split(":")[0]);
-
           if (rowHour >= taskStartHour && rowHour <= taskEndHour) {
             const div = document.createElement("div");
             div.classList.add("task", task.type);
+            div.title = `${task.name} @${task.location}`;
             div.innerText = `${task.startTime}-${task.endTime} ${task.name} @${task.location}`;
             taskArea.appendChild(div);
           }
@@ -235,7 +390,7 @@ function nextWeek() {
   buildWeek(currentDate);
 }
 
-// Initialize
+// Initial build
 buildWeek(currentDate);
 </script>
 
