@@ -1,0 +1,34 @@
+<script>
+  document.getElementById("scheduleForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    // Get input values
+    const flight = document.getElementById("flight").value;
+    const from = document.getElementById("from").value;
+    const to = document.getElementById("to").value;
+    const date = document.getElementById("date").value;
+    const time = document.getElementById("time").value;
+
+    // Combine date and time into one Date object
+    const flightDateTime = new Date(date + 'T' + time);
+    const now = new Date();
+
+    // Create table row
+    const table = document.getElementById("scheduleTable");
+    const row = table.insertRow();
+    row.insertCell(0).innerText = flight;
+    row.insertCell(1).innerText = from;
+    row.insertCell(2).innerText = to;
+    row.insertCell(3).innerText = date;
+    row.insertCell(4).innerText = time;
+
+    // If flight time is in the past, mark row as canceled
+    if (flightDateTime < now) {
+      row.style.textDecoration = "line-through";
+      row.style.color = "red";
+      row.title = "This flight time is in the past.";
+    }
+
+    this.reset();
+  });
+</script>
