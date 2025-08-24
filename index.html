@@ -607,18 +607,44 @@
 
   // Current time line update every second
   function updateCurrentTimeLine() {
-    const now = new Date();
-    const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes() + now.getSeconds()/60;
-    // Position relative to calendar top (header + 24*60 px)
-    const top = 30 + minutesSinceMidnight; // 30px header height
-    currentTimeLine.style.top = `${top}px`;
-    currentTimeDot.style.top = `${top-4}px`;
+  const now = new Date();
+  now.setSeconds(0, 0); // Normalize for consistency
 
-    // Position horizontally just after timeLabels column (50px)
-    currentTimeLine.style.left = '50px';
-    currentTimeLine.style.right = '0';
+  // Get start of current week in view
+  const startOfWeek = new Date(weekStart);
+  const endOfWeek = new Date(weekStart);
+  endOfWeek.setDate(endOfWeek.getDate() + 6);
+
+  // If today is not in the displayed week, hide the line
+  if (now < startOfWeek || now > endOfWeek) {
+    currentTimeLine.style.display = 'none';
+    currentTimeDot.style.display = 'none';
+    return;
   }
 
+  currentTimeLine.style.display = 'block';
+  currentTimeDot.style.display = 'block';
+
+  // Position vertically
+  const minutesSinceMidnight = now.getHours() * 60 + now.getMinutes();
+  const top = 30 + minutesSinceMidnight; // 30px header
+  currentTimeLine.style.top = `${top}px`;
+  currentTimeDot.style.top = `${top - 4}px`;
+
+  // Position horizontally inside today’s column
+  const dayIndex = now.getDay(); // 0 (Sun) to 6 (Sat)
+  const dayColumns = document.querySelectorAll('.dayColumn');
+
+  if (dayColumns.length !== 7) return;
+
+  const todayCol = dayColumns[dayIndex];
+  const colRect = todayCol.getBoundingClientRect();
+  const calendarRect = calendar.getBoundingClientRect();
+
+  const left = todayCol.offsetLeft;
+  currentTimeLine.style.left = `${left}px`;
+  currentTimeLine.style.right = `${calendar.offsetWidth - (left + todayCol.offsetWidth)}px`;
+}
   // Initialize calendar
   function init() {
     generateTimeLabels();
