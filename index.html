@@ -15,8 +15,9 @@
     gap: 2px;
     max-width: 1200px;
     margin: 0 auto;
+    position: relative;
   }
-  .dayColumn { border: 1px solid #ccc; background: #f9f9f9; }
+  .dayColumn { border: 1px solid #ccc; background: #f9f9f9; position: relative; }
   .dayHeader {
     background: #eee;
     font-weight: bold;
@@ -40,6 +41,8 @@
   }
   .tasks {
     margin-left: 35px;
+    position: relative;
+    z-index: 2; /* Ensure tasks are above time indicator */
   }
   .task {
     position: relative;
@@ -52,6 +55,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
+    z-index: 3;
   }
   .task:hover {
     opacity: 0.8;
@@ -64,6 +68,16 @@
     background: #ffeb3b !important;
     color: black;
   }
+  /* Current Time Line */
+  .currentTimeLine {
+    position: absolute;
+    height: 2px;
+    background-color: blue;
+    left: 35px; /* align past hour labels */
+    right: 5px;
+    z-index: 1;
+  }
+
   #taskModal {
     display: none;
     position: fixed;
@@ -161,6 +175,7 @@
     <option value="daily">Daily</option>
     <option value="weekly">Weekly</option>
     <option value="custom">Custom Days</option>
+    <option value="8days">Every 8 Days</option> <!-- New recurrence option -->
   </select>
   
   <div id="weekdaySelector" style="display:none; margin-top: 5px;">
@@ -173,6 +188,7 @@
     <label><input type="checkbox" value="6" /> Sat</label>
   </div>
   
+  <!-- Save button moved after recurrence selectors -->
   <button class="saveBtn" onclick="saveTask()">Save</button>
   <button class="cancelBtn" onclick="closeModal()">Cancel</button>
 </div>
@@ -212,6 +228,7 @@ function buildWeek(date) {
     dayDate.setDate(dayDate.getDate() + d);
     const dayCol = document.createElement("div");
     dayCol.classList.add("dayColumn");
+    dayCol.style.position = "relative";
 
     const header = document.createElement("div");
     header.classList.add("dayHeader");
@@ -236,11 +253,18 @@ function buildWeek(date) {
       dayCol.appendChild(hourRow);
     }
 
+    // Add a container div to position the current time line inside dayColumn
+    const timeLine = document.createElement("div");
+    timeLine.classList.add("currentTimeLine");
+    timeLine.style.display = "none"; // Hidden initially
+    dayCol.appendChild(timeLine);
+
     weekContainer.appendChild(dayCol);
   }
 
   highlightCurrentHour();
   renderTasks();
+  updateCurrentTimeLine(); // Call after building grid
 }
 
 // Highlight current day and hour
@@ -366,6 +390,14 @@ function renderTasks() {
           if (taskDate.getDay() === dayOfWeek) shouldShow = true;
         } else if (task.recurrence === "custom" && task.weekdays.includes(dayOfWeek)) {
           shouldShow = true;
+        } else if (task.recurrence === "8days") {
+          // Every 8 days from the task date, check if current date matches that pattern
+          const taskStartDate = new Date(task.date);
+          const diffTime = date - taskStartDate;
+          const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+          if (diffDays >= 0 && diffDays % 8 === 0) {
+            shouldShow = true;
+          }
         }
 
         if (shouldShow) {
@@ -405,6 +437,48 @@ function prevWeek() {
 function nextWeek() {
   currentDate.setDate(currentDate.getDate() + 7);
   buildWeek(currentDate);
+}
+
+// Function to update the blue current time line on each day column
+function updateCurrentTimeLine() {
+  const now = new Date();
+  const startOfWeek = getWeekStart(currentDate);
+
+  // Loop over each day column and position the current time line if today is in that column
+  const dayColumns = document.querySelectorAll(".dayColumn");
+
+  dayColumns.forEach(col => {
+    const dateStr = col.querySelector(".dayHeader").getAttribute("data-date");
+    const colDate = new Date(dateStr);
+
+    const timeLine = col.querySelector(".currentTimeLine");
+
+    if (colDate.toDateString() === now.toDateString()) {
+      // Show line
+      timeLine.style.display = "block";
+
+      // Calculate position within the column:
+      // Each hourRow min-height: 40px, 24 rows = 960px total height approx
+      // We calculate the number of minutes & seconds into the day, then convert to pixels
+
+      const hourRowHeight = 40; // px per hour row
+      const totalHours = 24;
+
+      // Total minutes in day so far:
+      const minutes = now.getHours() * 60 + now.getMinutes() + now.getSeconds()/60;
+
+      // Total pixels from top of dayColumn excluding header height (~30px)
+      const headerHeight = col.querySelector(".dayHeader").offsetHeight;
+      const offsetY = headerHeight + (minutes / 60) * hourRowHeight;
+
+      timeLine.style.top = `${offsetY}px`;
+    } else {
+      timeLine.style.display = "none";
+    }
+  });
+
+  // Update every second to keep seconds accurate
+  setTimeout(updateCurrentTimeLine, 1000);
 }
 
 // Initial build
