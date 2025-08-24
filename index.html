@@ -1,37 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>📅 Weekly College Planner</title>
-<script src="script"></script>
-  
-<style>
-  body { font-family: Arial, sans-serif; margin: 20px; }
-  h1 { text-align: center; }
-  #weekNav { text-align: center; margin-bottom: 10px; }
-  #weekNav button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
-  #weekContainer { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; max-width: 1200px; margin: 0 auto; }
-  .dayColumn { border: 1px solid #ccc; background: #f9f9f9; }
-  .dayHeader { background: #eee; font-weight: bold; padding: 5px; text-align: center; }
-  .hourRow { border-top: 1px solid #ddd; min-height: 40px; position: relative; cursor: pointer; padding: 0 3px; }
-  .hourLabel { font-size: 10px; position: absolute; left: 3px; top: 2px; }
-  .task { position: absolute; left: 0; right: 0; padding: 2px 5px; margin: 1px 0; border-radius: 4px; font-size: 12px; color: white; }
-  .class { background: #4CAF50; }
-  .assignment { background: #FF9800; }
-  .exam { background: #F44336; }
-  .event { background: #2196F3; }
-  .currentHour { background: #ffeb3b !important; color: black; } /* Highlight current hour */
-  #taskModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-               background: white; border: 1px solid #ccc; padding: 20px; z-index: 1000; width: 300px; border-radius: 8px; }
-  #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index:500; }
-  #taskModal input, #taskModal select { display: block; margin: 10px 0; padding: 5px; width: 100%; }
-  button.saveBtn { margin-top: 10px; background: #1976d2; color: white; border: none; padding: 8px 14px; border-radius: 5px; cursor: pointer; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📅 Weekly College Planner</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { text-align: center; }
+    #weekNav { text-align: center; margin-bottom: 10px; }
+    #weekNav button { padding: 5px 10px; margin: 0 5px; cursor: pointer; }
+    #weekContainer { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; max-width: 1200px; margin: 0 auto; }
+    .dayColumn { border: 1px solid #ccc; background: #f9f9f9; }
+    .dayHeader { background: #eee; font-weight: bold; padding: 5px; text-align: center; }
+    .hourRow { border-top: 1px solid #ddd; min-height: 40px; position: relative; cursor: pointer; padding: 0 3px; }
+    .hourLabel { font-size: 10px; position: absolute; left: 3px; top: 2px; }
+    .task { position: absolute; left: 0; right: 0; padding: 2px 5px; margin: 1px 0; border-radius: 4px; font-size: 12px; color: white; }
+    .class { background: #4CAF50; }
+    .assignment { background: #FF9800; }
+    .exam { background: #F44336; }
+    .event { background: #2196F3; }
+    .currentHour { background: #ffeb3b !important; color: black; }
+    #taskModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                 background: white; border: 1px solid #ccc; padding: 20px; z-index: 1000; width: 300px; border-radius: 8px; }
+    #overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); z-index:500; }
+    #taskModal input, #taskModal select { display: block; margin: 10px 0; padding: 5px; width: 100%; }
+    button.saveBtn { margin-top: 10px; background: #1976d2; color: white; border: none; padding: 8px 14px; border-radius: 5px; cursor: pointer; }
+  </style>
 </head>
 <body>
 
 <h1>📅 Weekly College Planner</h1>
+
 <div id="weekNav">
   <button onclick="prevWeek()">⟨ Prev Week</button>
   <span id="weekRange"></span>
@@ -40,6 +39,7 @@
 
 <div id="weekContainer"></div>
 
+<!-- Modal and overlay -->
 <div id="overlay"></div>
 <div id="taskModal">
   <h2>Add Task</h2>
@@ -74,8 +74,9 @@ let selectedDay = null;
 
 function getWeekStart(date) {
   let d = new Date(date);
-  let day = d.getDay();
-  d.setDate(d.getDate() - day); // Sunday as start
+  d.setHours(0,0,0,0);
+  let day = d.getDay(); // 0=Sun
+  d.setDate(d.getDate() - day);
   return d;
 }
 
@@ -87,28 +88,31 @@ function buildWeek(date) {
   weekContainer.innerHTML = "";
   const startOfWeek = getWeekStart(date);
   const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(endOfWeek.getDate()+6);
+  endOfWeek.setDate(endOfWeek.getDate() + 6);
   weekRangeEl.innerText = `${startOfWeek.toDateString()} - ${endOfWeek.toDateString()}`;
 
-  for(let d=0; d<7; d++) {
+  for (let d = 0; d < 7; d++) {
     const dayDate = new Date(startOfWeek);
-    dayDate.setDate(dayDate.getDate()+d);
+    dayDate.setDate(dayDate.getDate() + d);
+    const formattedDate = formatDate(dayDate);
+
     const dayCol = document.createElement("div");
     dayCol.classList.add("dayColumn");
 
     const header = document.createElement("div");
     header.classList.add("dayHeader");
     header.innerText = dayDate.toDateString();
+    header.setAttribute("data-date", formattedDate);
     dayCol.appendChild(header);
 
-    for(let hour=0; hour<24; hour++) {
+    for (let hour = 0; hour < 24; hour++) {
       const hourRow = document.createElement("div");
       hourRow.classList.add("hourRow");
       hourRow.onclick = () => openModal(dayDate);
 
       const label = document.createElement("div");
       label.classList.add("hourLabel");
-      label.innerText = `${String(hour).padStart(2,'0')}:00`;
+      label.innerText = `${String(hour).padStart(2, '0')}:00`;
       hourRow.appendChild(label);
 
       const taskArea = document.createElement("div");
@@ -125,29 +129,27 @@ function buildWeek(date) {
   renderTasks();
 }
 
-// Highlight current day and hour
 function highlightCurrentHour() {
   const now = new Date();
   const currentDayStr = now.toDateString();
   const currentHour = now.getHours();
 
-  const dayColumns = document.querySelectorAll(".dayColumn");
-  dayColumns.forEach(col => {
+  document.querySelectorAll(".dayColumn").forEach(col => {
     const dayStr = col.querySelector(".dayHeader").innerText;
     const rows = col.querySelectorAll(".hourRow");
     rows.forEach(row => row.classList.remove("currentHour"));
-    if(dayStr === currentDayStr) {
-      rows = col.querySelectorAll(".hourRow");
+
+    if (dayStr === currentDayStr) {
       rows.forEach(row => {
         const rowHour = parseInt(row.querySelector(".hourLabel").innerText.split(":")[0]);
-        if(rowHour === currentHour) {
+        if (rowHour === currentHour) {
           row.classList.add("currentHour");
         }
       });
     }
   });
-  // Update every minute
-  setTimeout(highlightCurrentHour, 60000);
+
+  setTimeout(highlightCurrentHour, 60000); // Update every minute
 }
 
 function openModal(day) {
@@ -159,6 +161,7 @@ function openModal(day) {
 function closeModal() {
   taskModal.style.display = "none";
   overlay.style.display = "none";
+  clearForm();
 }
 
 function saveTask() {
@@ -168,38 +171,45 @@ function saveTask() {
   const location = document.getElementById("taskLocation").value;
   const type = document.getElementById("taskType").value;
 
-  if(!name || !startTime || !endTime) return alert("Please enter name, start and end time!");
+  if (!name || !startTime || !endTime) {
+    return alert("Please enter name, start time, and end time!");
+  }
 
-  const task = { date:selectedDay, name, startTime, endTime, location, type };
+  if (startTime >= endTime) {
+    return alert("End time must be after start time.");
+  }
+
+  const task = { date: selectedDay, name, startTime, endTime, location, type };
   tasks.push(task);
   localStorage.setItem("tasks", JSON.stringify(tasks));
 
   closeModal();
-  clearForm();
   buildWeek(currentDate);
 }
 
 function clearForm() {
-  document.getElementById("taskName").value="";
-  document.getElementById("startTime").value="";
-  document.getElementById("endTime").value="";
-  document.getElementById("taskLocation").value="";
+  document.getElementById("taskName").value = "";
+  document.getElementById("startTime").value = "";
+  document.getElementById("endTime").value = "";
+  document.getElementById("taskLocation").value = "";
 }
 
 function renderTasks() {
-  const dayColumns = document.querySelectorAll(".dayColumn");
-  dayColumns.forEach(col => {
-    const date = formatDate(new Date(col.querySelector(".dayHeader").innerText));
+  document.querySelectorAll(".dayColumn").forEach(col => {
+    const date = col.querySelector(".dayHeader").getAttribute("data-date");
     const rows = col.querySelectorAll(".hourRow");
+
     rows.forEach(row => {
       const taskArea = row.querySelector(".tasks");
-      taskArea.innerHTML="";
+      taskArea.innerHTML = "";
+
       tasks.forEach(task => {
-        if(task.date === date) {
+        if (task.date === date) {
           const taskStartHour = parseInt(task.startTime.split(":")[0]);
           const taskEndHour = parseInt(task.endTime.split(":")[0]);
           const rowHour = parseInt(row.querySelector(".hourLabel").innerText.split(":")[0]);
-          if(rowHour >= taskStartHour && rowHour <= taskEndHour) {
+
+          if (rowHour >= taskStartHour && rowHour <= taskEndHour) {
             const div = document.createElement("div");
             div.classList.add("task", task.type);
             div.innerText = `${task.startTime}-${task.endTime} ${task.name} @${task.location}`;
@@ -212,15 +222,16 @@ function renderTasks() {
 }
 
 function prevWeek() {
-  currentDate.setDate(currentDate.getDate()-7);
+  currentDate.setDate(currentDate.getDate() - 7);
   buildWeek(currentDate);
 }
 
 function nextWeek() {
-  currentDate.setDate(currentDate.getDate()+7);
+  currentDate.setDate(currentDate.getDate() + 7);
   buildWeek(currentDate);
 }
 
+// Initialize
 buildWeek(currentDate);
 </script>
 
