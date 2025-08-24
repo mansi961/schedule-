@@ -1,34 +1,85 @@
-<script>
-  document.getElementById("scheduleForm").addEventListener("submit", function(e) {
-    e.preventDefault();
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Schedule - Plane Schedule Planner</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    nav a { margin: 10px; text-decoration: none; color: blue; }
+    nav a:hover { text-decoration: underline; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: center; }
+    th { background: #f2f2f2; }
+    .currentFlight { background-color: #ffe082; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>✈️ Plane Schedule Planner</h1>
+  
+  <!-- Navigation Menu -->
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="schedule.html">Schedule</a>
+    <a href="about.html">About</a>
+  </nav>
 
-    // Get input values
-    const flight = document.getElementById("flight").value;
-    const from = document.getElementById("from").value;
-    const to = document.getElementById("to").value;
-    const date = document.getElementById("date").value;
-    const time = document.getElementById("time").value;
+  <h2>Add Your Flights</h2>
+  <form id="scheduleForm">
+    <input type="text" id="flight" placeholder="Flight Number" required>
+    <input type="text" id="from" placeholder="From Airport" required>
+    <input type="text" id="to" placeholder="To Airport" required>
+    <input type="date" id="date" required>
+    <input type="time" id="time" required>
+    <button type="submit">Add Flight</button>
+  </form>
 
-    // Combine date and time into one Date object
-    const flightDateTime = new Date(date + 'T' + time);
-    const now = new Date();
+  <table id="scheduleTable">
+    <tr>
+      <th>Flight</th>
+      <th>From</th>
+      <th>To</th>
+      <th>Date</th>
+      <th>Time</th>
+    </tr>
+  </table>
 
-    // Create table row
-    const table = document.getElementById("scheduleTable");
-    const row = table.insertRow();
-    row.insertCell(0).innerText = flight;
-    row.insertCell(1).innerText = from;
-    row.insertCell(2).innerText = to;
-    row.insertCell(3).innerText = date;
-    row.insertCell(4).innerText = time;
+  <script>
+    document.getElementById("scheduleForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      let table = document.getElementById("scheduleTable");
+      let row = table.insertRow();
+      row.insertCell(0).innerText = document.getElementById("flight").value;
+      row.insertCell(1).innerText = document.getElementById("from").value;
+      row.insertCell(2).innerText = document.getElementById("to").value;
+      row.insertCell(3).innerText = document.getElementById("date").value;
+      row.insertCell(4).innerText = document.getElementById("time").value;
+      this.reset();
+      highlightCurrentFlight(); // Recheck after new flight added
+    });
 
-    // If flight time is in the past, mark row as canceled
-    if (flightDateTime < now) {
-      row.style.textDecoration = "line-through";
-      row.style.color = "red";
-      row.title = "This flight time is in the past.";
+    function highlightCurrentFlight() {
+      const now = new Date();
+      const rows = document.querySelectorAll("#scheduleTable tr");
+      rows.forEach((row, index) => {
+        if (index === 0) return; // Skip header row
+        row.classList.remove("currentFlight"); // Reset
+
+        const date = row.cells[3].innerText;
+        const time = row.cells[4].innerText;
+
+        const flightDateTime = new Date(date + 'T' + time);
+
+        // Within +/- 30 minutes from now
+        const diff = Math.abs(flightDateTime - now);
+        if (diff <= 30 * 60 * 1000) {
+          row.classList.add("currentFlight");
+          row.cells[0].innerText = "⏰ " + row.cells[0].innerText.replace("⏰ ", "");
+        }
+      });
     }
 
-    this.reset();
-  });
-</script>
+    // Check every minute for real-time highlighting
+    setInterval(highlightCurrentFlight, 60000);
+    highlightCurrentFlight(); // Run once at load
+  </script>
+</body>
+</html>
