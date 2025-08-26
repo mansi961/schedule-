@@ -94,9 +94,17 @@
   .assignment { background: #ff9800; }
   .exam { background: #f44336; }
   .event { background: #2196f3; }
+/* Current time line (BASE) */
+#currentTimeLine {
+  position: absolute;
+  height: 2px;
+  background: #2196f3;
+  z-index: 20;
+  pointer-events: none;
+}
 
-  /* Current time line */
-  #currentTimeLine::after {
+/* The little time label (HH:MM:SS) */
+#currentTimeLine::after {
   content: attr(data-time);
   position: absolute;
   top: -14px;
@@ -383,6 +391,29 @@ function updateCurrentTimeLine(){
     line.style.display = "none";
     return;
   }
+
+  line.style.display = "block";
+
+  // vertical position (1 minute = 1px; include seconds as a fraction)
+  const minutes = now.getHours()*60 + now.getMinutes() + (now.getSeconds()/60);
+  const top = 30 + minutes; // +30 for day header height
+  line.style.top = `${top}px`;
+
+  // time label (HH:MM:SS)
+  const h = String(now.getHours()).padStart(2,"0");
+  const m = String(now.getMinutes()).padStart(2,"0");
+  const s = String(now.getSeconds()).padStart(2,"0");
+  line.setAttribute("data-time", `${h}:${m}:${s}`);
+
+  // width/left to match today's column
+  const dayIndex = now.getDay();
+  const cols = document.querySelectorAll(".dayColumn");
+  if (cols.length === 7) {
+    const col = cols[dayIndex];
+    line.style.left = `${col.offsetLeft}px`;
+    line.style.width = `${col.offsetWidth}px`;
+  }
+}
 
   line.style.display = "block";
 
