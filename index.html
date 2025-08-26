@@ -103,11 +103,11 @@
   /* Current time line */
  #currentTimeLine {
   position: absolute;
-  left: 50px; /* after time labels */
-  right: 0;
   height: 2px;
   background: #2196f3;
   z-index: 10;
+  width: calc(100% / 7 - 10px); /* Subtract padding */
+  pointer-events: none;
 }
   #currentTimeDot {
     position: absolute;
@@ -641,10 +641,12 @@
   const colRect = todayCol.getBoundingClientRect();
   const calendarRect = calendar.getBoundingClientRect();
 
-  const left = todayCol.offsetLeft;
-  currentTimeLine.style.left = `${left}px`;
-  currentTimeLine.style.right = `${calendar.offsetWidth - (left + todayCol.offsetWidth)}px`;
-}
+ const left = todayCol.offsetLeft;
+const colWidth = todayCol.offsetWidth;
+
+currentTimeLine.style.left = `${left}px`;
+currentTimeLine.style.width = `${colWidth - 10}px`; // account for padding
+
   // Initialize calendar
   function init() {
     generateTimeLabels();
