@@ -96,14 +96,18 @@
   .event { background: #2196f3; }
 
   /* Current time line */
-  #currentTimeLine {
-    position: absolute;
-    height: 2px;
-    background: #2196f3;
-    z-index: 20;
-    pointer-events: none;
-  }
-
+  #currentTimeLine::after {
+  content: attr(data-time);
+  position: absolute;
+  top: -14px;
+  left: 5px;
+  background: #2196f3;
+  color: white;
+  font-size: 11px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
   /* Modal */
   #overlay {
     position: fixed;
@@ -392,6 +396,30 @@ function updateCurrentTimeLine(){
   const m = String(now.getMinutes()).padStart(2,"0");
   const s = String(now.getSeconds()).padStart(2,"0");
   line.setAttribute("data-time", `${h}:${m}:${s}`);
+// Request notification permission
+if ("Notification" in window && Notification.permission !== "granted") {
+  Notification.requestPermission();
+}
+
+// Check for upcoming tasks every second
+setInterval(() => {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  
+  const now = new Date();
+  const nowStr = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+  
+  tasks.forEach(task => {
+    if (task.date === formatDate(now)) {
+      // if it's the task start time
+      if (task.startTime === nowStr && now.getSeconds() === 0) {
+        new Notification("⏰ Task Reminder", {
+          body: `${task.name} at ${task.startTime} (${task.location || "No location"})`,
+          icon: "https://cdn-icons-png.flaticon.com/512/2088/2088617.png"
+        });
+      }
+    }
+  });
+}, 1000);
 
   // adjust width/position for the correct day column
   const dayIndex = now.getDay();
