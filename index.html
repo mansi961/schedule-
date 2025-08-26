@@ -94,28 +94,16 @@
   .assignment { background: #ff9800; }
   .exam { background: #f44336; }
   .event { background: #2196f3; }
-/* Current time line (BASE) */
-#currentTimeLine {
-  position: absolute;
-  height: 2px;
-  background: #2196f3;
-  z-index: 20;
-  pointer-events: none;
-}
 
-/* The little time label (HH:MM:SS) */
-#currentTimeLine::after {
-  content: attr(data-time);
-  position: absolute;
-  top: -14px;
-  left: 5px;
-  background: #2196f3;
-  color: white;
-  font-size: 11px;
-  padding: 2px 5px;
-  border-radius: 3px;
-  white-space: nowrap;
-}
+  /* Current time line */
+  #currentTimeLine {
+    position: absolute;
+    height: 2px;
+    background: #2196f3;
+    z-index: 20;
+    pointer-events: none;
+  }
+
   /* Modal */
   #overlay {
     position: fixed;
@@ -381,89 +369,26 @@ function toggleWeekdays(){
     document.getElementById("recurrence").value==="custom"?"block":"none";
 }
 function updateCurrentTimeLine(){
-  const line = document.getElementById("currentTimeLine");
-  const now = new Date();
-  const startOfWeek = new Date(weekStart);
-  const endOfWeek = new Date(weekStart); 
-  endOfWeek.setDate(endOfWeek.getDate()+6);
-
-  if (now < startOfWeek || now > endOfWeek) {
-    line.style.display = "none";
-    return;
-  }
-
-  line.style.display = "block";
-
-  // vertical position (1 minute = 1px; include seconds as a fraction)
-  const minutes = now.getHours()*60 + now.getMinutes() + (now.getSeconds()/60);
-  const top = 30 + minutes; // +30 for day header height
-  line.style.top = `${top}px`;
-
-  // time label (HH:MM:SS)
-  const h = String(now.getHours()).padStart(2,"0");
-  const m = String(now.getMinutes()).padStart(2,"0");
-  const s = String(now.getSeconds()).padStart(2,"0");
-  line.setAttribute("data-time", `${h}:${m}:${s}`);
-
-  // width/left to match today's column
-  const dayIndex = now.getDay();
-  const cols = document.querySelectorAll(".dayColumn");
-  if (cols.length === 7) {
-    const col = cols[dayIndex];
-    line.style.left = `${col.offsetLeft}px`;
-    line.style.width = `${col.offsetWidth}px`;
-  }
-}
-
-  line.style.display = "block";
-
-  // calculate position
-  const minutes = now.getHours()*60 + now.getMinutes();
-  const top = 30 + minutes + (now.getSeconds() / 60); // include seconds fraction
-  line.style.top = `${top}px`;
-
-  // show time text (HH:MM:SS)
-  const h = String(now.getHours()).padStart(2,"0");
-  const m = String(now.getMinutes()).padStart(2,"0");
-  const s = String(now.getSeconds()).padStart(2,"0");
-  line.setAttribute("data-time", `${h}:${m}:${s}`);
-// Request notification permission
-if ("Notification" in window && Notification.permission !== "granted") {
-  Notification.requestPermission();
-}
-
-// Check for upcoming tasks every second
-setInterval(() => {
-  if (!("Notification" in window) || Notification.permission !== "granted") return;
-  
-  const now = new Date();
-  const nowStr = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
-  
-  tasks.forEach(task => {
-    if (task.date === formatDate(now)) {
-      // if it's the task start time
-      if (task.startTime === nowStr && now.getSeconds() === 0) {
-        new Notification("⏰ Task Reminder", {
-          body: `${task.name} at ${task.startTime} (${task.location || "No location"})`,
-          icon: "https://cdn-icons-png.flaticon.com/512/2088/2088617.png"
-        });
-      }
-    }
-  });
-}, 1000);
-
-  // adjust width/position for the correct day column
-  const dayIndex = now.getDay();
-  const cols = document.querySelectorAll(".dayColumn");
-  if (cols.length === 7) {
-    const col = cols[dayIndex];
-    line.style.left = `${col.offsetLeft}px`;
-    line.style.width = `${col.offsetWidth}px`;
+  const line=document.getElementById("currentTimeLine");
+  const now=new Date();
+  const startOfWeek=new Date(weekStart);
+  const endOfWeek=new Date(weekStart); endOfWeek.setDate(endOfWeek.getDate()+6);
+  if(now<startOfWeek||now>endOfWeek){line.style.display="none";return;}
+  line.style.display="block";
+  const minutes=now.getHours()*60+now.getMinutes();
+  const top=30+minutes;
+  line.style.top=`${top}px`;
+  const dayIndex=now.getDay();
+  const cols=document.querySelectorAll(".dayColumn");
+  if(cols.length===7){
+    const col=cols[dayIndex];
+    line.style.left=`${col.offsetLeft}px`;
+    line.style.width=`${col.offsetWidth}px`;
   }
 }
 function init(){
   generateTimeLabels(); generateDayColumns(); renderTasks(); updateCurrentTimeLine();
-  setInterval(updateCurrentTimeLine,1000);
+  setInterval(updateCurrentTimeLine,60000);
 }
 function prevWeek(){ weekStart.setDate(weekStart.getDate()-7); generateDayColumns(); renderTasks(); }
 function nextWeek(){ weekStart.setDate(weekStart.getDate()+7); generateDayColumns(); renderTasks(); }
