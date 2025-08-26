@@ -369,26 +369,42 @@ function toggleWeekdays(){
     document.getElementById("recurrence").value==="custom"?"block":"none";
 }
 function updateCurrentTimeLine(){
-  const line=document.getElementById("currentTimeLine");
-  const now=new Date();
-  const startOfWeek=new Date(weekStart);
-  const endOfWeek=new Date(weekStart); endOfWeek.setDate(endOfWeek.getDate()+6);
-  if(now<startOfWeek||now>endOfWeek){line.style.display="none";return;}
-  line.style.display="block";
-  const minutes=now.getHours()*60+now.getMinutes();
-  const top=30+minutes;
-  line.style.top=`${top}px`;
-  const dayIndex=now.getDay();
-  const cols=document.querySelectorAll(".dayColumn");
-  if(cols.length===7){
-    const col=cols[dayIndex];
-    line.style.left=`${col.offsetLeft}px`;
-    line.style.width=`${col.offsetWidth}px`;
+  const line = document.getElementById("currentTimeLine");
+  const now = new Date();
+  const startOfWeek = new Date(weekStart);
+  const endOfWeek = new Date(weekStart); 
+  endOfWeek.setDate(endOfWeek.getDate()+6);
+
+  if (now < startOfWeek || now > endOfWeek) {
+    line.style.display = "none";
+    return;
+  }
+
+  line.style.display = "block";
+
+  // calculate position
+  const minutes = now.getHours()*60 + now.getMinutes();
+  const top = 30 + minutes + (now.getSeconds() / 60); // include seconds fraction
+  line.style.top = `${top}px`;
+
+  // show time text (HH:MM:SS)
+  const h = String(now.getHours()).padStart(2,"0");
+  const m = String(now.getMinutes()).padStart(2,"0");
+  const s = String(now.getSeconds()).padStart(2,"0");
+  line.setAttribute("data-time", `${h}:${m}:${s}`);
+
+  // adjust width/position for the correct day column
+  const dayIndex = now.getDay();
+  const cols = document.querySelectorAll(".dayColumn");
+  if (cols.length === 7) {
+    const col = cols[dayIndex];
+    line.style.left = `${col.offsetLeft}px`;
+    line.style.width = `${col.offsetWidth}px`;
   }
 }
 function init(){
   generateTimeLabels(); generateDayColumns(); renderTasks(); updateCurrentTimeLine();
-  setInterval(updateCurrentTimeLine,60000);
+  setInterval(updateCurrentTimeLine,1000);
 }
 function prevWeek(){ weekStart.setDate(weekStart.getDate()-7); generateDayColumns(); renderTasks(); }
 function nextWeek(){ weekStart.setDate(weekStart.getDate()+7); generateDayColumns(); renderTasks(); }
