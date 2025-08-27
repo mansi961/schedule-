@@ -40,6 +40,7 @@
     margin: 0 auto 40px;
     background: white;
     position: relative;
+    overflow-x: auto;
   }
   #timeLabels {
     grid-column: 1 / 2;
@@ -69,6 +70,7 @@
     color: white;
     font-weight: bold;
     border-bottom: 1px solid #ccc;
+    font-size: 12px;
   }
   .hourLine {
     position: absolute;
@@ -94,6 +96,7 @@
   .assignment { background: #ff9800; }
   .exam { background: #f44336; }
   .event { background: #2196f3; }
+  .job { background: #9c27b0; }
 
   /* Current time line */
   #currentTimeLine {
@@ -130,7 +133,7 @@
     border: 1px solid #ccc; border-radius: 4px;
   }
   #weekdaySelector { margin-top: 8px; }
-  #weekdaySelector label { margin-right: 8px; cursor: pointer; }
+  #weekdaySelector label { margin-right: 8px; cursor: pointer; font-size: 12px; }
   button {
     cursor: pointer; padding: 10px; margin-top: 15px; width: 100%;
     border: none; border-radius: 5px; font-weight: bold;
@@ -173,24 +176,13 @@
   <label>Location:</label>
   <input type="text" id="taskLocation" />
 
- <label>end date:</label>
-  <input type="text" id="taskenddate" />
-
- <label>job:</label>
-  <input type="text" id="taskjob" />
-
   <label>Type:</label>
   <select id="taskType">
     <option value="class">Class</option>
     <option value="assignment">Assignment</option>
     <option value="exam">Exam</option>
     <option value="event">Event</option>
-    <option value="end date">end date</option>
-    <option value="job">job</option>
-
-                                   
-
-   
+    <option value="job">Job</option>
   </select>
 
   <label>Recurrence:</label>
@@ -210,8 +202,6 @@
     <label><input type="checkbox" value="4" /> Thu</label>
     <label><input type="checkbox" value="5" /> Fri</label>
     <label><input type="checkbox" value="6" /> Sat</label>
-    <label><input type="checkbox" value="7" /> Mon</label>
-
   </div>
 
   <button class="saveBtn" onclick="saveTask()">Save</button>
@@ -266,7 +256,7 @@ function generateDayColumns() {
     for (let h=0; h<24; h++) {
       const line=document.createElement("div");
       line.className="hourLine";
-      line.style.top=`${30+h*60}px`;
+      line.style.top=`${30+h*60}px`;  // aligns with timeLabel height
       col.appendChild(line);
     }
     col.addEventListener("click",e=>{
