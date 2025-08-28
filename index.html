@@ -97,6 +97,7 @@
   .exam { background: #f44336; }
   .event { background: #2196f3; }
   .job { background: #9c27b0; }
+  .enddate { background: #795548; }
 
   /* Current time line */
   #currentTimeLine {
@@ -173,6 +174,9 @@
   <label>End Time:</label>
   <input type="time" id="endTime" />
 
+  <label>End Date (for Job/Deadline):</label>
+  <input type="date" id="taskEndDate" />
+
   <label>Location:</label>
   <input type="text" id="taskLocation" />
 
@@ -183,6 +187,7 @@
     <option value="exam">Exam</option>
     <option value="event">Event</option>
     <option value="job">Job</option>
+    <option value="enddate">End Date</option>
   </select>
 
   <label>Recurrence:</label>
@@ -267,7 +272,23 @@ function generateDayColumns() {
     calendar.appendChild(col);
   }
 }
+
+function cleanExpiredTasks(){
+  const now = new Date();
+  tasks = tasks.filter(task => {
+    if(task.endDate){
+      const taskEnd = new Date(task.endDate + "T" + (task.endTime||"23:59"));
+      return taskEnd >= now;
+    } else {
+      const taskEnd = new Date(task.date + "T" + task.endTime);
+      return taskEnd >= now;
+    }
+  });
+  saveTasks();
+}
+
 function renderTasks() {
+  cleanExpiredTasks();
   document.querySelectorAll(".task").forEach(t=>t.remove());
   const dayColumns=document.querySelectorAll(".dayColumn");
   dayColumns.forEach(dayCol=>{
@@ -275,6 +296,21 @@ function renderTasks() {
     const dayDate=new Date(dateStr);
     tasks.forEach(task=>{
       if (!shouldShowTask(task, dayDate)) return;
+
+      // Special End Date marker
+      if(task.type==="enddate"){
+        const top = 30 + 9*60; // show at 09:00
+        const div = document.createElement("div");
+        div.className = `task ${task.type}`;
+        div.style.top = `${top}px`;
+        div.style.height = "60px";
+        div.innerText = "📌 " + task.name;
+        div.title = `Deadline: ${task.endDate || task.date}`;
+        div.onclick = e => { e.stopPropagation(); openModal(task); };
+        dayCol.appendChild(div);
+        return;
+      }
+
       const start=parseTime(task.startTime);
       const end=parseTime(task.endTime);
       const dur=(end.hour*60+end.minute)-(start.hour*60+start.minute);
@@ -315,6 +351,7 @@ function openModal(task=null){
   document.getElementById("taskDate").value=formatDate(currentDate);
   document.getElementById("startTime").value="09:00";
   document.getElementById("endTime").value="10:00";
+  document.getElementById("taskEndDate").value="";
   document.getElementById("taskLocation").value="";
   document.getElementById("taskType").value="class";
   document.getElementById("recurrence").value="none";
@@ -326,6 +363,7 @@ function openModal(task=null){
     document.getElementById("taskDate").value=task.date;
     document.getElementById("startTime").value=task.startTime;
     document.getElementById("endTime").value=task.endTime;
+    document.getElementById("taskEndDate").value=task.endDate||"";
     document.getElementById("taskLocation").value=task.location;
     document.getElementById("taskType").value=task.type;
     document.getElementById("recurrence").value=task.recurrence;
@@ -343,6 +381,7 @@ function saveTask(){
   const date=document.getElementById("taskDate").value;
   const start=document.getElementById("startTime").value;
   const end=document.getElementById("endTime").value;
+  const endDate=document.getElementById("taskEndDate").value||null;
   if(!name||!date||!start||!end){alert("Fill all required fields");return;}
   if(start>=end){alert("End time must be after start");return;}
   const location=document.getElementById("taskLocation").value.trim();
@@ -350,56 +389,4 @@ function saveTask(){
   const recurrence=document.getElementById("recurrence").value;
   let weekdays=[];
   if (recurrence==="custom"){
-    weekdays=Array.from(document.querySelectorAll("#weekdaySelector input:checked")).map(cb=>+cb.value);
-    if (weekdays.length===0){alert("Select weekdays");return;}
-  }
-  if(editingTaskId){
-    const idx=tasks.findIndex(t=>t.id===editingTaskId);
-    if(idx!==-1) tasks[idx]={...tasks[idx],name,date,startTime:start,endTime:end,location,type,recurrence,weekdays};
-  }else{
-    tasks.push({id:Date.now(),name,date,startTime:start,endTime:end,location,type,recurrence,weekdays});
-  }
-  saveTasks(); closeModal(); renderTasks();
-}
-function deleteTask(){
-  if(editingTaskId && confirm("Delete task?")){
-    tasks=tasks.filter(t=>t.id!==editingTaskId);
-    saveTasks(); closeModal(); renderTasks();
-  }
-}
-function saveTasks(){ localStorage.setItem("tasks",JSON.stringify(tasks)); }
-function toggleWeekdays(){
-  document.getElementById("weekdaySelector").style.display=
-    document.getElementById("recurrence").value==="custom"?"block":"none";
-}
-function updateCurrentTimeLine(){
-  const line=document.getElementById("currentTimeLine");
-  const now=new Date();
-  const startOfWeek=new Date(weekStart);
-  const endOfWeek=new Date(weekStart); endOfWeek.setDate(endOfWeek.getDate()+6);
-  if(now<startOfWeek||now>endOfWeek){line.style.display="none";return;}
-  line.style.display="block";
-  const minutes=now.getHours()*60+now.getMinutes();
-  const top=30+minutes;
-  line.style.top=`${top}px`;
-  const dayIndex=now.getDay();
-  const cols=document.querySelectorAll(".dayColumn");
-  if(cols.length===7){
-    const col=cols[dayIndex];
-    line.style.left=`${col.offsetLeft}px`;
-    line.style.width=`${col.offsetWidth}px`;
-  }
-}
-function init(){
-  generateTimeLabels(); generateDayColumns(); renderTasks(); updateCurrentTimeLine();
-  setInterval(updateCurrentTimeLine,60000);
-}
-function prevWeek(){ weekStart.setDate(weekStart.getDate()-7); generateDayColumns(); renderTasks(); }
-function nextWeek(){ weekStart.setDate(weekStart.getDate()+7); generateDayColumns(); renderTasks(); }
-function goToday(){ currentDate=new Date(); currentDate.setHours(0,0,0,0); weekStart=getWeekStart(currentDate); generateDayColumns(); renderTasks(); }
-
-overlay.addEventListener("click",closeModal);
-init();
-</script>
-</body>
-</html>
+    weekdays=Array
